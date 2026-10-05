@@ -14,16 +14,8 @@ export function activate(context: vscode.ExtensionContext) {
     for (const change of event.contentChanges) {
       const insertedText = change.text;
 
-      // Ignore single keypresses / normal typing (less than 15 chars or single line edits without brackets)
-      if (insertedText.length < 20 || !insertedText.includes('\n') && !insertedText.includes(';')) {
-        continue;
-      }
-
-      // Read system clipboard to verify if this change was triggered by a Paste operation
-      const clipboardText = await vscode.env.clipboard.readText();
-      const isPastedContent = clipboardText && clipboardText.trim() === insertedText.trim();
-
-      if (isPastedContent && CodeAnalyzer.isLikelyCode(insertedText)) {
+      // Detect pasted code or multi-line/multi-character code insertion (10+ characters)
+      if (insertedText.length >= 10 && CodeAnalyzer.isLikelyCode(insertedText)) {
         await processCodeSnippet(insertedText, event.document.languageId);
       }
     }
