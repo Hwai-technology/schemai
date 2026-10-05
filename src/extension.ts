@@ -7,15 +7,21 @@ import { AnalysisResult, ProjectPolicy } from './types';
 export function activate(context: vscode.ExtensionContext) {
   console.log('SchemAI extension activated.');
 
-  // Listen to document changes (detect paste or multi-character addition)
+  // Listen to document changes (detect paste operation)
   let disposableListener = vscode.workspace.onDidChangeTextDocument(async (event) => {
     if (event.contentChanges.length === 0) return;
 
     for (const change of event.contentChanges) {
       const insertedText = change.text;
 
-      // Detect pasted code or multi-line/multi-character code insertion (10+ characters)
-      if (insertedText.length >= 10 && CodeAnalyzer.isLikelyCode(insertedText)) {
+      // Only trigger if inserted block is substantial (at least 20 chars & contains newlines/semicolons)
+      if (insertedText.length < 20 || (!insertedText.includes('\n') && !insertedText.includes(';'))) {
+        continue;
+      }
+
+      // Check system clipboard to ensure this was a genuine PASTE action by the user
+      const clipboardText = await vscode.env.clipboard.readText();
+      if (clipboardText && clipboardText.trim() === insertedText.trim() && CodeAnalyzer.isLikelyCode(insertedText)) {
         await processCodeSnippet(insertedText, event.document.languageId);
       }
     }
