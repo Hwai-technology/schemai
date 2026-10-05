@@ -35,6 +35,15 @@
         "title": "SchemAI: Analyze Selected Code"
       }
     ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "schemaAI.analyzeSelection",
+          "when": "editorHasSelection",
+          "group": "1_modification"
+        }
+      ]
+    },
     "configuration": {
       "title": "SchemAI Settings",
       "properties": {
