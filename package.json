@@ -1,0 +1,69 @@
+{
+  "name": "schema-ai",
+  "displayName": "SchemAI - External Code & License Risk Analyzer",
+  "description": "Smart extension to detect external code, search sources (GitHub), evaluate license compatibility, and assess risks on paste.",
+  "version": "0.0.1",
+  "license": "MIT",
+  "publisher": "schemai-team",
+  "icon": "media/schema_ai_team_logo.jpg",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hwai-technology/schemai"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other",
+    "Linters"
+  ],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:python",
+    "onLanguage:java",
+    "onLanguage:csharp",
+    "onLanguage:go",
+    "onLanguage:cpp",
+    "onLanguage:rust"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "schemaAI.analyzeSelection",
+        "title": "SchemAI: Analyze Selected Code"
+      }
+    ],
+    "configuration": {
+      "title": "SchemAI Settings",
+      "properties": {
+        "schemaAI.projectLicense": {
+          "type": "string",
+          "default": "MIT",
+          "description": "The target license of your project for compatibility checking."
+        },
+        "schemaAI.githubToken": {
+          "type": "string",
+          "default": "",
+          "description": "Optional GitHub Personal Access Token to avoid rate limits."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "test": "npm run compile && mocha out/test/**/*.test.js",
+    "package": "vsce package --allow-missing-repository"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^16.18.126",
+    "@types/vscode": "^1.75.0",
+    "@vscode/vsce": "^4.0.0",
+    "mocha": "^10.2.0",
+    "typescript": "^4.9.5"
+  }
+}
