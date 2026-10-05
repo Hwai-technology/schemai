@@ -66,11 +66,9 @@
     "watch": "tsc -w -p ./",
     "test": "npm run compile && mocha out/test/**/*.test.js",
     "package": "vsce package --allow-missing-repository",
-    "bump:patch": "npm version patch",
-    "bump:minor": "npm version minor",
-    "publish:openvsx": "ovsx publish -p",
-    "release:patch": "npm version patch && npm run package && ovsx publish -p",
-    "release:minor": "npm version minor && npm run package && ovsx publish -p"
+    "release": "bash release.sh",
+    "release:minor": "bash release.sh minor",
+    "release:major": "bash release.sh major"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
