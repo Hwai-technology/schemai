@@ -1,3 +1,4 @@
+import 'mocha';
 import * as assert from 'assert';
 import { RiskEngine } from '../riskEngine';
 import { CandidateSource, ProjectPolicy } from '../types';
