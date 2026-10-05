@@ -4,7 +4,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "🚀 Starting SchemAI Extension Release process ($ReleaseType)..." -ForegroundColor Cyan
+Write-Host "Starting SchemAI Extension Release process ($ReleaseType)..." -ForegroundColor Cyan
 
 # Load .env file if present
 if (Test-Path ".env") {
@@ -18,24 +18,24 @@ if (Test-Path ".env") {
 }
 
 # 1. Update version number
-Write-Host "📦 Updating version number..." -ForegroundColor Yellow
+Write-Host "Updating version number..." -ForegroundColor Yellow
 npm version $ReleaseType
 
 # 2. Package VSIX
-Write-Host "🛠️ Packaging extension VSIX..." -ForegroundColor Yellow
+Write-Host "Packaging extension VSIX..." -ForegroundColor Yellow
 npx vsce package --allow-missing-repository
 
 # 3. Publish to Open VSX
 $ovsxPat = [System.Environment]::GetEnvironmentVariable("OVSX_PAT")
 if ($ovsxPat) {
-    Write-Host "🌐 Publishing to Open VSX..." -ForegroundColor Green
+    Write-Host "Publishing to Open VSX..." -ForegroundColor Green
     npx ovsx publish -p $ovsxPat
 } else {
-    Write-Host "⚠️ OVSX_PAT not set. Skipping Open VSX publication." -ForegroundColor Red
+    Write-Host "OVSX_PAT not set. Skipping Open VSX publication." -ForegroundColor Red
 }
 
 # 4. Push to GitHub
-Write-Host "⬆️ Pushing changes & tags to GitHub..." -ForegroundColor Cyan
+Write-Host "Pushing changes and tags to GitHub..." -ForegroundColor Cyan
 git push origin main --tags
 
-Write-Host "✅ Release completed successfully!" -ForegroundColor Green
+Write-Host "Release completed successfully!" -ForegroundColor Green
