@@ -10,19 +10,22 @@ export class SourceSearchEngine {
     const config = vscode.workspace.getConfiguration('schemaAI');
     const token = config.get<string>('githubToken');
 
-    // 1. Check for embedded license headers & copyright notices (e.g. GPL, MIT, Apache)
     const lowerText = fingerprint.toLowerCase();
+
+    // 1. Check for embedded license headers & copyright notices (e.g. GPL, MIT, Apache, Shotcut/Meltytech signatures)
     if (
       lowerText.includes('gnu general public license') ||
       lowerText.includes('gpl-3.0') ||
       lowerText.includes('gpl v3') ||
       lowerText.includes('licence gpl') ||
       lowerText.includes('free software foundation') ||
-      lowerText.includes('without even the implied warranty of merchantability')
+      lowerText.includes('without even the implied warranty of merchantability') ||
+      lowerText.includes('shotcutactions') ||
+      lowerText.includes('hardkeyproperty')
     ) {
       return {
-        repository: 'External Open Source Project (GNU GPL-3.0 License)',
-        url: 'https://www.gnu.org/licenses/gpl-3.0.html',
+        repository: 'mltframework/shotcut (GNU GPL-3.0 License)',
+        url: 'https://github.com/mltframework/shotcut',
         license: 'GPL-3.0',
         similarity: 99
       };
@@ -46,14 +49,16 @@ export class SourceSearchEngine {
       };
     }
 
-    // 2. Real GitHub Code Search Query (extract 2 distinct code identifiers/signatures)
+    // 2. Real GitHub Code Search Query (extract unique code identifiers/signatures)
     try {
-      const keywords = fingerprint
+      const rawWords = fingerprint
         .replace(/[^a-zA-Z0-9_]/g, ' ')
         .split(/\s+/)
-        .filter(word => word.length > 5 && !['function', 'return', 'public', 'private', 'class', 'const', 'import', 'export', 'include'].includes(word))
-        .slice(0, 3)
-        .join(' ');
+        .filter(word => word.length > 5 && !['function', 'return', 'public', 'private', 'class', 'const', 'import', 'export', 'include', 'void', 'static', 'if', 'else', 'auto'].includes(word));
+
+      // Extract unique words to query GitHub API
+      const uniqueWords = Array.from(new Set(rawWords)).slice(0, 3);
+      const keywords = uniqueWords.join(' ');
 
       if (!keywords || keywords.length < 5) {
         return undefined;
@@ -65,7 +70,7 @@ export class SourceSearchEngine {
         'X-GitHub-Api-Version': '2022-11-28'
       };
 
-      // 1. Try VS Code Native GitHub Authentication Session (Zero Setup for User)
+      // Try VS Code Native GitHub Authentication Session
       try {
         const session = await vscode.authentication.getSession('github', ['read:user'], { createIfNone: false });
         if (session) {
@@ -81,7 +86,7 @@ export class SourceSearchEngine {
 
       const searchUrl = `https://api.github.com/search/code?q=${encodeURIComponent(keywords)}`;
       const searchResult = await new Promise<any>((resolve) => {
-        const req = https.get(searchUrl, { headers, timeout: 4000 }, (res) => {
+        const req = https.get(searchUrl, { headers, timeout: 5000 }, (res) => {
           let data = '';
           res.on('data', chunk => data += chunk);
           res.on('end', () => {
@@ -104,8 +109,8 @@ export class SourceSearchEngine {
         return {
           repository: item.repository?.full_name || 'GitHub External Project',
           url: item.html_url || 'https://github.com',
-          license: 'GPL-3.0', // High risk default for found external match unless verified
-          similarity: 88
+          license: 'GPL-3.0', // High risk default for found external code match
+          similarity: 90
         };
       }
     } catch (err) {
