@@ -59,11 +59,22 @@ export class SourceSearchEngine {
 
       const headers: Record<string, string> = {
         'Accept': 'application/vnd.github+json',
-        'User-Agent': 'SchemAI-VSCode-Extension'
+        'User-Agent': 'SchemAI-VSCode-Extension',
+        'X-GitHub-Api-Version': '2022-11-28'
       };
 
-      if (token) {
-        headers['Authorization'] = `token ${token}`;
+      // 1. Try VS Code Native GitHub Authentication Session (Zero Setup for User)
+      try {
+        const session = await vscode.authentication.getSession('github', ['read:user'], { createIfNone: false });
+        if (session) {
+          headers['Authorization'] = `Bearer ${session.accessToken}`;
+        } else if (token) {
+          headers['Authorization'] = token.startsWith('github_pat_') || token.startsWith('ghp_') ? `Bearer ${token}` : `token ${token}`;
+        }
+      } catch {
+        if (token) {
+          headers['Authorization'] = token.startsWith('github_pat_') || token.startsWith('ghp_') ? `Bearer ${token}` : `token ${token}`;
+        }
       }
 
       const searchUrl = `https://api.github.com/search/code?q=${encodeURIComponent(keywords)}`;
