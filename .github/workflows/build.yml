@@ -43,5 +43,7 @@ jobs:
           path: '*.vsix'
 
       - name: Publish to OpenVSX
-        if: ${{ secrets.OVSX_PAT != '' && github.ref == 'refs/heads/main' }}
+        if: ${{ env.OVSX_PAT != '' && github.ref == 'refs/heads/main' }}
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: npx ovsx publish *.vsix -p ${{ secrets.OVSX_PAT }}
