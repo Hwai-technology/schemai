@@ -31,7 +31,7 @@ jobs:
         run: npm run compile
 
       - name: Run Unit Tests
-        run: npx mocha out/test/**/*.test.js || true
+        run: npm test
 
       - name: Package VSIX Extension
         run: npm run package
@@ -41,3 +41,7 @@ jobs:
         with:
           name: schema-ai-vsix-${{ matrix.node-version }}
           path: '*.vsix'
+
+      - name: Publish to OpenVSX
+        if: ${{ secrets.OVSX_PAT != '' && github.ref == 'refs/heads/main' }}
+        run: npx ovsx publish *.vsix -p ${{ secrets.OVSX_PAT }}

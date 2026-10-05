@@ -56,7 +56,12 @@
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
     "test": "npm run compile && mocha out/test/**/*.test.js",
-    "package": "vsce package --allow-missing-repository"
+    "package": "vsce package --allow-missing-repository",
+    "bump:patch": "npm version patch",
+    "bump:minor": "npm version minor",
+    "publish:openvsx": "ovsx publish -p",
+    "release:patch": "npm version patch && npm run package && ovsx publish -p",
+    "release:minor": "npm version minor && npm run package && ovsx publish -p"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -64,6 +69,7 @@
     "@types/vscode": "^1.75.0",
     "@vscode/vsce": "^4.0.0",
     "mocha": "^10.8.2",
+    "ovsx": "^1.2.0",
     "typescript": "^4.9.5"
   }
 }
