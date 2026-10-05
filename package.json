@@ -2,7 +2,7 @@
   "name": "schema-ai",
   "displayName": "SchemAI - External Code & License Risk Analyzer",
   "description": "Smart extension to detect external code, search sources (GitHub), evaluate license compatibility, and assess risks on paste.",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "license": "MIT",
   "publisher": "schemai-team",
   "icon": "media/schema_ai_team_logo.jpg",
