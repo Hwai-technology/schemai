@@ -6,6 +6,11 @@ set -e
 # Default release type is patch (0.0.1 -> 0.0.2)
 RELEASE_TYPE=${1:-patch}
 
+# Load environment variables from .env file if present
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+fi
+
 echo "🚀 Starting SchemAI Extension Release process ($RELEASE_TYPE)..."
 
 # 1. Bump version using npm (updates package.json & creates a git tag)
