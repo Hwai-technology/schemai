@@ -30,7 +30,6 @@ export class CodeAnalyzer {
    */
   public static generateFingerprint(text: string): string {
     const normalized = text
-      .replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '') // strip single and multi-line comments
       .replace(/\s+/g, ' ')                  // collapse whitespace
       .trim();
 

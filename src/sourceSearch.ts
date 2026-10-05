@@ -16,13 +16,15 @@ export class SourceSearchEngine {
       lowerText.includes('gnu general public license') ||
       lowerText.includes('gpl-3.0') ||
       lowerText.includes('gpl v3') ||
-      lowerText.includes('licence gpl')
+      lowerText.includes('licence gpl') ||
+      lowerText.includes('free software foundation') ||
+      lowerText.includes('without even the implied warranty of merchantability')
     ) {
       return {
-        repository: 'External Open Source (GNU GPL-3.0 Repository)',
+        repository: 'External Open Source Project (GNU GPL-3.0 License)',
         url: 'https://www.gnu.org/licenses/gpl-3.0.html',
         license: 'GPL-3.0',
-        similarity: 98
+        similarity: 99
       };
     }
 
