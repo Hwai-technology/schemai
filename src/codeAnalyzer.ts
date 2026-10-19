@@ -29,8 +29,11 @@ export class CodeAnalyzer {
    * Generates a normalized fingerprint of the code (stripping whitespace, comments, etc.)
    */
   public static generateFingerprint(text: string): string {
-    const normalized = text
-      .replace(/\s+/g, ' ')                  // collapse whitespace
+    const withoutComments = text
+      .replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1');
+
+    const normalized = withoutComments
+      .replace(/\s+/g, ' ')
       .trim();
 
     return normalized;
