@@ -50,4 +50,45 @@ export class CodeAnalyzer {
       .update(fingerprint)
       .digest('hex');
   }
+
+  /**
+   * Extracts meaningful code tokens (identifiers, variables, function names)
+   */
+  public static extractCodeTokens(text: string): Set<string> {
+    const commonKeywords = new Set([
+      'function', 'return', 'public', 'private', 'class', 'const', 'let', 'var',
+      'import', 'export', 'include', 'void', 'static', 'if', 'else', 'auto',
+      'while', 'for', 'switch', 'case', 'break', 'true', 'false', 'null',
+      'string', 'number', 'boolean', 'int', 'def', 'self', 'this'
+    ]);
+
+    const words = text
+      .replace(/[^a-zA-Z0-9_]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length >= 3 && !commonKeywords.has(w.toLowerCase()));
+
+    return new Set(words);
+  }
+
+  /**
+   * Computes Jaccard token similarity between snippet and source
+   */
+  public static calculateTokenSimilarity(snippet: string, source: string): number {
+    const tokensA = this.extractCodeTokens(snippet);
+    const tokensB = this.extractCodeTokens(source);
+
+    if (tokensA.size === 0 || tokensB.size === 0) {
+      return 0;
+    }
+
+    let intersectionCount = 0;
+    for (const token of tokensA) {
+      if (tokensB.has(token)) {
+        intersectionCount++;
+      }
+    }
+
+    const unionCount = new Set([...tokensA, ...tokensB]).size;
+    return unionCount > 0 ? (intersectionCount / unionCount) : 0;
+  }
 }

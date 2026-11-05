@@ -27,7 +27,7 @@ export class PasteMonitor {
 
         // Skip small edits or single-line character typing
         if (
-          insertedText.length < 20 ||
+          insertedText.length < 25 ||
           (!insertedText.includes('\n') && !insertedText.includes(';') && !insertedText.includes('{'))
         ) {
           continue;
@@ -67,6 +67,13 @@ export class PasteMonitor {
 
       if (!isClipboardMatch) return;
 
+      // Self-copy detection: check if snippet already existed in the document (internal duplication)
+      const docText = document.getText();
+      const occurrences = docText.split(insertedText.trim()).length - 1;
+      if (occurrences > 1) {
+        return; // Internal code duplicate within the same file
+      }
+
       const fingerprint = CodeAnalyzer.generateFingerprint(insertedText);
       const hash = CodeAnalyzer.generateHash(fingerprint);
 
@@ -98,4 +105,3 @@ export class PasteMonitor {
     }
   }
 }
-
