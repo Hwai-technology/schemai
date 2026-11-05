@@ -1,147 +1,205 @@
-# 🚀 دليل الفريق: دورة العمل، البناء، والنشر التلقائي (Team Workflow & CI/CD Guide)
+# 🚀 Team Development, Release & Automated Publishing Guide
 
-هذا الدليل مخصص لفريق تطوير **SchemAI** لشرح كيفية بناء حزمة الإضافة (`.vsix`) محلياً، وكيف تعمل أتمتة النشر التلقائي عبر **GitHub Actions**، وكيفية إعداد المفاتيح للرفع التلقائي إلى المتاجر الرسمية.
-
----
-
-## 📌 الفهرس
-1. [متطلبات بيئة العمل (Prerequisites)](#1-متطلبات-بيئة-العمل-prerequisites)
-2. [كيفية البناء والتجربة محلياً (Local Build & Test)](#2-كيفية-البناء-والتجربة-محليا-local-build--test)
-3. [كيفية إصدار نسخة جديدة (Creating a New Release)](#3-كيفية-إصدار-نسخة-جديدة-creating-a-new-release)
-4. [كيف يعمل النشر التلقائي في GitHub Actions (Automated CI/CD Workflow)](#4-كيف-يعمل-النشر-التلقائي-في-github-actions-automated-cicd-workflow)
-5. [إعداد أسرار المستودع للنشر (Repository Secrets Setup)](#5-إعداد-أسرار-المستودع-للنشر-repository-secrets-setup)
-6. [استكشاف الأخطاء وحلها (Troubleshooting)](#6-استكشاف-الأخطاء-وحلها-troubleshooting)
+This document is the official guide for the **SchemAI** engineering team. It explains how to build and test the extension locally, how automated continuous integration and deployment (CI/CD) work via **GitHub Actions**, how releases are published to global marketplaces, and how to resolve common environment issues.
 
 ---
 
-## 1. متطلبات بيئة العمل (Prerequisites)
-
-* **Node.js**: الإصدار **20.x LTS** أو **22.x** (تنبيه: لا تستخدم Node 18، لأن أدوات `@vscode/vsce` الحديثة تتطلب Node 20+).
-* **Git**: مثبت ومُعدّ.
-* **VS Code**: الإصدار 1.85.0 فما فوق.
+## 📌 Table of Contents
+1. [Prerequisites & Node.js Requirement](#1-prerequisites--nodejs-requirement)
+2. [Root Cause Analysis: `styleText is not a function`](#2-root-cause-analysis-styletext-is-not-a-function)
+3. [Local Build, Test & Packaging](#3-local-build-test--packaging)
+4. [Semantic Versioning & Creating a Release](#4-semantic-versioning--creating-a-release)
+5. [Automated CI/CD Workflow Architecture](#5-automated-cicd-workflow-architecture)
+6. [Configuring Marketplace Secrets in GitHub](#6-configuring-marketplace-secrets-in-github)
+7. [How Users Receive Automatic Updates](#7-how-users-receive-automatic-updates)
+8. [Troubleshooting & FAQ](#8-troubleshooting--faq)
 
 ---
 
-## 2. كيفية البناء والتجربة محلياً (Local Build & Test)
+## 1. Prerequisites & Node.js Requirement
 
-قبل رفع أي كود إلى المستودع، يجب التأكد من خلوه من الأخطاء:
+* **Node.js**: **v20.x LTS** or **v22.x** (Active LTS).
+  > ⚠️ **IMPORTANT**: Do **NOT** use Node.js 18.x. The VS Code packaging tool (`@vscode/vsce` v3+) relies on standard APIs introduced in Node.js 20.12.0+.
+* **npm**: v10+ (bundled with Node 20/22).
+* **VS Code**: Version 1.85.0 or newer.
+* **Git**: Installed and configured.
+
+---
+
+## 2. Root Cause Analysis: `styleText is not a function`
+
+### The Error:
+```text
+Run npx vsce package --allow-missing-repository
+/home/runner/work/schemai/schemai/node_modules/@vscode/vsce/out/util.js:204
+    [LogMessageType.DONE]: (0, util_1.styleText)(['bgGreen', 'black'], ' DONE '),
+                                                ^
+TypeError: (0 , util_1.styleText) is not a function
+Node.js v18.20.8
+```
+
+### Why it happened:
+1. The packaging tool `@vscode/vsce` (version 3.x) imports `styleText` directly from Node's internal `util` module:
+   ```javascript
+   const { styleText } = require('node:util');
+   ```
+2. `util.styleText()` was added to Node.js in **v20.12.0** and **v21.7.0**.
+3. In older runners (e.g. Node 18.20.8), `util.styleText` does not exist (`undefined`), throwing a runtime `TypeError`.
+4. In addition, Node.js 18 reached official **End-of-Life (EOL)** in April 2025.
+
+### The Fix:
+We updated `.github/workflows/ci-matrix.yml` to remove `18.x` from the test matrix:
+```yaml
+matrix:
+  os: [ubuntu-latest, windows-latest, macos-latest]
+  node-version: [20.x, 22.x]
+```
+All CI builds on Windows, Ubuntu, and macOS now run on supported LTS versions where `vsce package` succeeds with 0 errors.
+
+---
+
+## 3. Local Build, Test & Packaging
+
+Before pushing any changes or tagging a release, run the following steps in your terminal:
 
 ```bash
-# 1. تثبيت الحزم والمكتبات
+# 1. Install dependencies
 npm install
 
-# 2. تجميع ملفات TypeScript
+# 2. Compile TypeScript
 npm run compile
 
-# 3. تشغيل الاختبارات الآلية والتحقق من الأداء
+# 3. Run automated unit tests and benchmark (< 15s)
 npm test
 
-# 4. بناء ملف الحزمة (.vsix) محلياً
+# 4. Package extension into a local .vsix file
 npm run package
 ```
 
-بعد تشغيل أمر `npm run package`، سيظهر ملف الحزمة في المجلد الرئيسي باسم:
+This will produce the installation file in the repository root:
 `schema-ai-X.Y.Z.vsix`
 
-### لتثبيته وتجربته فوراً في VS Code لديك:
+### Installing & Testing in VS Code:
+To install and test your newly built package in your local VS Code editor:
 ```bash
-code --install-extension schema-ai-0.1.1.vsix
+code --install-extension schema-ai-0.1.1.vsix --force
 ```
-أو من داخل VS Code: افتح تبويب الإضافات (`Extensions`) ثم اضغط على القائمة ثلاثية النقاط `...` واختر **`Install from VSIX...`**.
+
+for antigravity:
+```bash
+antigravity
+
+```
+Or open VS Code, navigate to **Extensions (`Ctrl+Shift+X`)** ➡️ click the three dots **`...`** (Views and More Actions) ➡️ **`Install from VSIX...`** ➡️ select `schema-ai-0.1.1.vsix`.
 
 ---
 
-## 3. كيفية إصدار نسخة جديدة (Creating a New Release)
+## 4. Semantic Versioning & Creating a Release
 
-نحن نتبع معيار الترقيم الدلالي (**Semantic Versioning - SemVer**):
-* **Patch (`0.1.1 -> 0.1.2`)**: لإصلاح الأخطاء الطفيفة والتحديثات السريعة.
-* **Minor (`0.1.0 -> 0.2.0`)**: عند إضافة ميزات أو واجهات جديدة متوافقة مع السابق.
-* **Major (`0.1.0 -> 1.0.0`)**: عند التغييرات الهيكلية الكبيرة غير المتوافقة.
+SchemAI follows [Semantic Versioning (SemVer)](https://semver.org/):
+* **Patch (`0.1.1` ➡️ `0.1.2`)**: Bug fixes, heuristic optimizations, false positive corrections.
+* **Minor (`0.1.0` ➡️ `0.2.0`)**: New backward-compatible features, new UI dashboards, added license policies.
+* **Major (`0.1.0` ➡️ `1.0.0`)**: Breaking changes or complete architectural overhauls.
 
-### الطريقة السريعة والآلية (موصى بها):
-تم تجهيز سكريبت آلي داخل المشروع يدعى `release.sh`:
+### One-Command Release (Automated Script):
+We provide an automated script `release.sh`:
 
 ```bash
-# لإصدار تصحيح أخطاء (Patch):
+# For a bug fix / patch release:
 ./release.sh patch
 
-# أو لإصدار ميزة جديدة (Minor):
+# For a new feature / minor release:
 ./release.sh minor
 ```
 
-### ماذا يفعل هذا السكريبت تلقائياً؟
-1. يتحقق من نجاح الاختبارات وتجميع الكود (`npm test`).
-2. يقوم بزيادة رقم الإصدار في ملف `package.json`.
-3. يقوم بعمل Commit تلقائي باسم الإصدار الجديد.
-4. ينشئ Git Tag باسم الإصدار (مثال: `v0.1.2`).
-5. يدفع التغييرات والـ Tag إلى GitHub (`git push origin main --tags`).
+### What `release.sh` does automatically:
+1. Runs full test suite and TypeScript compilation (`npm test`).
+2. Bumps the version number in `package.json`.
+3. Creates a Git commit: `chore(release): bump version to vX.Y.Z`.
+4. Creates a Git tag: `vX.Y.Z`.
+5. Pushes both the commit and the tag to GitHub (`git push origin main --tags`).
 
 ---
 
-## 4. كيف يعمل النشر التلقائي في GitHub Actions (Automated CI/CD Workflow)
+## 5. Automated CI/CD Workflow Architecture
 
-بمجرد دفع التاغ `v*` (أو عند دمج كود في `main`)، يبدأ مسار العمل المؤتمت في مسار `.github/workflows/`:
+When a version tag `v*` is pushed (or a pull request is merged into `main`), GitHub Actions automatically coordinates the release pipeline:
 
 ```
 +-------------------------------------------------------------+
-| 1. دفع الإصدار: git push origin v0.1.2                      |
+| 1. Developer pushes tag: git push origin v0.1.2             |
 +------------------------------+------------------------------+
                                |
                                v
 +-------------------------------------------------------------+
-| 2. يعمل سير العمل: .github/workflows/release.yml            |
-|    - فحص الكود وتثبيت الحزم (Node 20+)                      |
-|    - تشغيل الاختبارات وفحص الأمان (CodeQL)                  |
-|    - تجميع ملفات TypeScript وبناء schema-ai-0.1.2.vsix      |
+| 2. GitHub Actions runs: .github/workflows/release.yml        |
+|    - Checks out repo and sets up Node 20+                   |
+|    - Runs code compilation & tests                          |
+|    - Executes: npx vsce package                             |
+|    - Generates standalone: schema-ai-0.1.2.vsix             |
 +------------------------------+------------------------------+
                                |
                                v
 +-------------------------------------------------------------+
-| 3. رفع حزمة الإصدار كـ GitHub Release تلقائياً              |
-|    - إنشاء Release رسمي وتضمين ملف .vsix للتحميل المباشر    |
+| 3. Create GitHub Release                                    |
+|    - Generates release notes from commits                   |
+|    - Attaches schema-ai-0.1.2.vsix as downloadable asset    |
 +------------------------------+------------------------------+
                                |
                                v
 +-------------------------------------------------------------+
-| 4. النشر الآلي للمتاجر العالمية:                            |
-|    أ) النشر إلى Open VSX Registry (Eclipse Foundation)       |
-|    ب) النشر إلى Visual Studio Code Marketplace (Microsoft)  |
+| 4. Publish to Global Extension Registries:                  |
+|    a) Open VSX Registry (Eclipse Foundation / Open-VSX)     |
+|       Command: npx ovsx publish -p $OVSX_PAT                |
+|    b) Visual Studio Marketplace (Microsoft)                 |
+|       Command: npx vsce publish -p $VSCE_PAT                |
 +------------------------------+------------------------------+
                                |
                                v
 +-------------------------------------------------------------+
-| 5. استلام المستخدمين للتحديث تلقائياً:                       |
-|    يقوم VS Code في أجهزة المستخدمين بتحديث الإضافة في       |
-|    الخلفية تلقائياً دون أي تدخل يدوي!                       |
+| 5. Automatic Client-Side Upgrades:                          |
+|    VS Code installations worldwide detect the new version    |
+|    and upgrade in the background automatically!             |
 +-------------------------------------------------------------+
 ```
 
 ---
 
-## 5. إعداد أسرار المستودع للنشر (Repository Secrets Setup)
+## 6. Configuring Marketplace Secrets in GitHub
 
-لكي ينجح GitHub Actions في نشر الإضافة إلى المتاجر بدون أخطاء، يحتاج المستودع إلى مفتاحين فقط في إعدادات GitHub:
+To allow GitHub Actions to publish automatically to the public registries, two secrets must be configured in the GitHub repository:
 
-ادخل إلى المستودع: **Settings ➡️ Secrets and variables ➡️ Actions ➡️ New repository secret**
+Navigate to: **GitHub Repository ➡️ Settings ➡️ Secrets and variables ➡️ Actions ➡️ New repository secret**
 
-| اسم المفتاح (Secret Name) | الغرض منه | من أين تحصل عليه؟ |
+| Secret Name | Purpose | Where to Get It |
 | :--- | :--- | :--- |
-| `OVSX_PAT` | مفتاح الوصول لمتجر **Open VSX** | من حسابك في [open-vsx.org](https://open-vsx.org/user-settings/tokens) (Token يحمل صلاحية النشر لمنظمة `schemai-team`) |
-| `VSCE_PAT` أو `VS_MARKETPLACE_PAT` | مفتاح متجر **Microsoft VS Code Marketplace** | من منصة [Azure DevOps](https://dev.azure.com) (Personal Access Token بنطاق `Marketplace (Publish)`) |
+| `OVSX_PAT` | Access token for **Open VSX Registry** | [open-vsx.org Account Settings](https://open-vsx.org/user-settings/tokens) (Token must have permission for namespace `schemai-team`) |
+| `VSCE_PAT` | Personal Access Token for **VS Code Marketplace** | [Azure DevOps](https://dev.azure.com) (Token with scope: `Marketplace -> Publish`) |
 
-> 💡 **ملاحظة هامة:** إذا لم تكن المفاتيح مضافة، سيتخطى سير العمل خطوة الرفع للمتجر بأمان دون أن يفشل البناء، وسيقوم بإنشاء الـ GitHub Release وملف الـ `.vsix` بنجاح.
+> 🛡️ **Safe Fallback**: If secrets are not yet configured, the release workflow will skip the marketplace upload step safely without breaking the build, ensuring the GitHub Release and `.vsix` download are always created.
+
+---
+
+## 7. How Users Receive Automatic Updates
+
+1. **Marketplace Installs (Automatic)**:
+   * Users who install SchemAI from the **Open VSX Registry** or **VS Code Marketplace** have automatic background updates enabled by default in VS Code (`extensions.autoUpdate: true`).
+   * VS Code checks for new extension versions daily. When `0.1.2` is published, it silently downloads and installs it.
+2. **Direct VSIX Sideloading (Manual)**:
+   * Users who manually install a `.vsix` file will not receive automatic updates until they switch to the marketplace version, or manually install a newer `.vsix`.
 
 ---
 
-## 6. استكشاف الأخطاء وحلها (Troubleshooting)
+## 8. Troubleshooting & FAQ
 
-### خطأ: `TypeError: (0, util_1.styleText) is not a function`
-* **السبب**: تشغيل أمر التجميع باستخدام إصدار قديم من Node.js (مثل Node 18).
-* **الحل**: تم تحديث ملفات GitHub Actions Matrix لتشغيل **Node 20.x و 22.x** فقط. محلياً تأكد من تحديث Node عبر `nvm use 20` أو `nvm use 22`.
+### Q1: Why did GitHub Actions fail with `styleText is not a function`?
+* **Answer**: The job was running on an old Node 18 runner. `@vscode/vsce` v3 requires Node 20.12.0+. The matrix in `.github/workflows/ci-matrix.yml` has been updated to `[20.x, 22.x]`.
 
-### خطأ: `Unrecognized named-value: 'secrets'`
-* **السبب**: في GitHub Actions لا يمكن قراءة `secrets.*` مباشرة داخل عبارات `if:` في الخطوات.
-* **الحل**: تم ربط الأسرار في متغيرات بيئة الـ Job (`env: OVSX_PAT: ${{ secrets.OVSX_PAT }}`) ثم الفحص عبر `if: env.OVSX_PAT != ''`.
+### Q2: Why did GitHub Actions report `Unrecognized named-value: 'secrets'`?
+* **Answer**: GitHub Actions does not allow direct access to `secrets` inside step-level `if:` conditions. The correct pattern is to map the secret to a job-level environment variable (`env: OVSX_PAT: ${{ secrets.OVSX_PAT }}`), then evaluate `if: env.OVSX_PAT != ''`.
+
+### Q3: How do I test the extension in development mode without packaging?
+* **Answer**: Press **`F5`** in VS Code with this project open. It will launch an **Extension Development Host** window with SchemAI loaded in real-time with full debugging capabilities.
 
 ---
-**فريق SchemAI 🛡️**
+**SchemAI Engineering Team 🛡️**
