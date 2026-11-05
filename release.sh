@@ -36,7 +36,7 @@ npx vsce package --allow-missing-repository
 # 4. Publish to Open VSX Registry if token is provided
 if [ -n "$OVSX_PAT" ]; then
     echo "🌐 Publishing to Open VSX directly..."
-    npx ovsx publish -p "$OVSX_PAT"
+    npx ovsx publish -p "$OVSX_PAT" || echo "⚠️ Open VSX: upload skipped or version already published."
 else
     echo "ℹ️ OVSX_PAT environment variable not set locally."
     echo "   (GitHub Actions CI/CD will publish automatically if OVSX_PAT secret is configured on GitHub)."
