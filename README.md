@@ -154,3 +154,10 @@ npm run release
 # Patch release (e.g. 0.1.0 -> 0.1.1)
 npm run release:patch
 ```
+
+---
+
+## 📖 Team CI/CD & Automated Publishing Guide
+* For complete step-by-step instructions on automated marketplace publishing, GitHub Actions workflows, secret configurations (`OVSX_PAT`, `VSCE_PAT`), and troubleshooting, see:
+  👉 **[Team Release & CI/CD Workflow Guide](./docs/TEAM_RELEASE_WORKFLOW.md)**
+

@@ -17,21 +17,17 @@ export class SourceSearchEngine {
   ): Promise<CandidateSource | undefined> {
     const lowerText = fingerprint.toLowerCase();
 
-    // 1. Strict Check for genuine embedded license headers & legal notices
-    // (Requires authentic copyright notice blocks, NOT just casual mentions of "GPL" in strings or variables)
+    // 1. Strict Check for authentic embedded full license copyright notices
+    // Requires the authentic legal copyright header block, NOT casual strings, variables, or comments.
     const hasGplLegalNotice =
-      (lowerText.includes('gnu general public license') &&
-        (lowerText.includes('version 3') ||
-          lowerText.includes('version 2') ||
-          lowerText.includes('free software foundation'))) ||
-      (lowerText.includes('free software foundation') &&
-        lowerText.includes('without even the implied warranty of merchantability')) ||
-      (lowerText.includes('shotcutactions') && lowerText.includes('hardkeyproperty'));
+      lowerText.includes('gnu general public license') &&
+      lowerText.includes('without even the implied warranty of merchantability') &&
+      (lowerText.includes('free software foundation') || lowerText.includes('either version 3 of the license'));
 
     if (hasGplLegalNotice) {
       return {
-        repository: 'mltframework/shotcut (GNU GPL-3.0)',
-        url: 'https://github.com/mltframework/shotcut',
+        repository: 'GNU GPL-3.0 Licensed Code',
+        url: 'https://www.gnu.org/licenses/gpl-3.0.html',
         license: 'GPL-3.0',
         similarity: 99,
         spdxId: 'GPL-3.0'
@@ -40,6 +36,7 @@ export class SourceSearchEngine {
 
     const hasMitLegalNotice =
       lowerText.includes('permission is hereby granted, free of charge') &&
+      lowerText.includes('substantial portions of the software') &&
       lowerText.includes('mit license');
     if (hasMitLegalNotice) {
       return {
@@ -53,7 +50,7 @@ export class SourceSearchEngine {
 
     const hasApacheLegalNotice =
       lowerText.includes('apache license, version 2.0') &&
-      lowerText.includes('http://www.apache.org/licenses/license-2.0');
+      lowerText.includes('you may not use this file except in compliance with the license');
     if (hasApacheLegalNotice) {
       return {
         repository: 'External Open Source (Apache-2.0)',
@@ -68,10 +65,10 @@ export class SourceSearchEngine {
     try {
       const codeTokens = Array.from(CodeAnalyzer.extractCodeTokens(fingerprint));
 
-      // Require at least 3 distinct, substantial code identifiers to prevent searching common words
-      const uniqueIdentifiers = codeTokens.filter(t => t.length >= 5).slice(0, 4);
+      // Require at least 4 distinct, substantial code identifiers to prevent searching common words
+      const uniqueIdentifiers = codeTokens.filter(t => t.length >= 6).slice(0, 5);
 
-      if (uniqueIdentifiers.length < 3) {
+      if (uniqueIdentifiers.length < 4) {
         return undefined; // Not enough distinct identifiers for reliable external matching
       }
 
@@ -130,6 +127,21 @@ export class SourceSearchEngine {
           return undefined; // Skip internal project repo
         }
 
+        // 4. Strict Content Verification: Download candidate file to verify authentic similarity
+        let authenticSimilarity = 0;
+        if (item.repository?.full_name && item.path) {
+          const rawUrl = `https://raw.githubusercontent.com/${item.repository.full_name}/HEAD/${item.path}`;
+          const rawContent = await this.httpGetText(rawUrl, headers);
+          if (rawContent) {
+            authenticSimilarity = CodeAnalyzer.calculateTokenSimilarity(fingerprint, rawContent);
+          }
+        }
+
+        // Only accept match if genuine similarity is >= 70% (prevent accidental variable name overlaps)
+        if (authenticSimilarity < 0.70) {
+          return undefined;
+        }
+
         // Query repository metadata for actual license
         let actualLicense = 'UNKNOWN';
         let spdxId = 'UNKNOWN';
@@ -146,18 +158,12 @@ export class SourceSearchEngine {
           }
         }
 
-        // Calculate token similarity between the snippet and matched item's path/name
-        const similarity = Math.min(
-          95,
-          Math.max(65, Math.round(uniqueIdentifiers.length * 20))
-        );
-
         return {
           repository: item.repository?.full_name || 'GitHub External Project',
           url: item.html_url || `https://github.com/${item.repository?.full_name}`,
           license: actualLicense,
-          similarity,
-         spdxId
+          similarity: Math.round(authenticSimilarity * 100),
+          spdxId
         };
       }
     } catch (err) {
@@ -206,6 +212,28 @@ export class SourceSearchEngine {
         });
       });
 
+      req.on('error', () => resolve(null));
+      req.on('timeout', () => {
+        req.destroy();
+        resolve(null);
+      });
+    });
+  }
+
+  private static httpGetText(
+    url: string,
+    headers: Record<string, string>
+  ): Promise<string | null> {
+    return new Promise(resolve => {
+      const req = https.get(url, { headers, timeout: 6000 }, res => {
+        if (res.statusCode !== 200) {
+          resolve(null);
+          return;
+        }
+        let rawData = '';
+        res.on('data', chunk => (rawData += chunk));
+        res.on('end', () => resolve(rawData));
+      });
       req.on('error', () => resolve(null));
       req.on('timeout', () => {
         req.destroy();

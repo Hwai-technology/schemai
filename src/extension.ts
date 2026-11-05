@@ -85,8 +85,8 @@ export async function activate(context: vscode.ExtensionContext) {
       editorDecorator.applyDecoration(activeEditor, item.range, result);
     }
 
-    // Auto-reveal the Live Interactive Risk Card for FORBIDDEN / Critical Risks
-    if (result.riskLevel === 'FORBIDDEN' || result.riskLevel === 'HIGH') {
+    // Reveal the Live Interactive Risk Card for manual analysis or user-initiated review
+    if (item.isManual && (result.riskLevel === 'FORBIDDEN' || result.riskLevel === 'HIGH')) {
       RiskCardPanel.show(entry);
     }
 

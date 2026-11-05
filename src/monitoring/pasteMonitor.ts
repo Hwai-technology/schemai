@@ -12,7 +12,7 @@ export class PasteMonitor {
 
   public register(context: vscode.ExtensionContext): void {
     const disposable = vscode.workspace.onDidChangeTextDocument(async (event) => {
-      // Ignore output panels or git diffs/internal schemes
+      // Ignore output panels, git diffs, settings, or internal schemes
       if (
         event.document.uri.scheme !== 'file' &&
         event.document.uri.scheme !== 'untitled'
@@ -20,25 +20,38 @@ export class PasteMonitor {
         return;
       }
 
-      if (event.contentChanges.length === 0) return;
+      // Ignore multi-change events (like Prettier formatting on save, refactor, replace-all)
+      if (event.contentChanges.length === 0 || event.contentChanges.length > 2) {
+        return;
+      }
+
+      // Exclude SchemAI's internal source files during extension self-development
+      const fsPath = event.document.uri.fsPath.replace(/\\/g, '/');
+      if (
+        fsPath.includes('/schemai/src/') ||
+        fsPath.endsWith('/sourceSearch.ts') ||
+        fsPath.endsWith('/riskEngine.ts')
+      ) {
+        return;
+      }
 
       for (const change of event.contentChanges) {
         const insertedText = change.text;
 
         // Skip small edits or single-line character typing
         if (
-          insertedText.length < 25 ||
+          insertedText.length < 30 ||
           (!insertedText.includes('\n') && !insertedText.includes(';') && !insertedText.includes('{'))
         ) {
           continue;
         }
 
-        // Quick heuristic check
+        // Quick heuristic check: must look like actual source code
         if (!CodeAnalyzer.isLikelyCode(insertedText)) {
           continue;
         }
 
-        // Non-blocking clipboard comparison check
+        // Strict non-blocking clipboard and workspace verification check
         this.verifyAndEnqueue(event.document, change, insertedText);
       }
     });
@@ -52,32 +65,52 @@ export class PasteMonitor {
     insertedText: string
   ): Promise<void> {
     try {
-      // Quick async clipboard peek with fallback
-      let isClipboardMatch = true;
+      // 1. Strict Clipboard Verification (Zero Guessing)
+      let clipboardText = '';
       try {
-        const clipboardText = await vscode.env.clipboard.readText();
-        if (clipboardText && clipboardText.trim() !== insertedText.trim()) {
-          // If clipboard exists and clearly differs, it could be a code formatting or multi-cursor duplicate
-          isClipboardMatch = false;
-        }
+        clipboardText = await vscode.env.clipboard.readText();
       } catch {
-        // In environments where clipboard permission is restricted, proceed based on heuristics
-        isClipboardMatch = true;
+        // If clipboard cannot be read, NEVER guess it is a paste (strict verification)
+        return;
       }
 
-      if (!isClipboardMatch) return;
+      if (!clipboardText || clipboardText.trim().length < 25) {
+        // Clipboard is empty or too short; this is manual typing, formatting, or snippet expansion
+        return;
+      }
 
-      // Self-copy detection: check if snippet already existed in the document (internal duplication)
-      const docText = document.getText();
-      const occurrences = docText.split(insertedText.trim()).length - 1;
-      if (occurrences > 1) {
-        return; // Internal code duplicate within the same file
+      // Normalize whitespace and indentation to compare
+      const normClipboard = clipboardText.replace(/\r?\n\s*/g, '\n').trim();
+      const normInserted = insertedText.replace(/\r?\n\s*/g, '\n').trim();
+
+      // Must be an authentic clipboard paste
+      if (normClipboard !== normInserted && !normInserted.includes(normClipboard)) {
+        return;
+      }
+
+      // 2. Project Workspace Exclusion:
+      // Check if this snippet already exists in the user's workspace documents (copying own project code)
+      const trimmedSnippet = insertedText.trim();
+      for (const openDoc of vscode.workspace.textDocuments) {
+        if (openDoc.uri.scheme === 'file') {
+          const docText = openDoc.getText();
+          const occurrences = docText.split(trimmedSnippet).length - 1;
+
+          // Copied from another open file in the workspace
+          if (openDoc.uri.toString() !== document.uri.toString() && occurrences >= 1) {
+            return;
+          }
+          // Internal code duplicate within the exact same file
+          if (openDoc.uri.toString() === document.uri.toString() && occurrences > 1) {
+            return;
+          }
+        }
       }
 
       const fingerprint = CodeAnalyzer.generateFingerprint(insertedText);
       const hash = CodeAnalyzer.generateHash(fingerprint);
 
-      // Prevent immediate duplicate firing from multiple cursor paste
+      // Prevent immediate duplicate firing from multi-cursor or rapid re-paste
       if (this.lastCapturedHash === hash) {
         return;
       }
@@ -86,7 +119,7 @@ export class PasteMonitor {
         if (this.lastCapturedHash === hash) {
           this.lastCapturedHash = undefined;
         }
-      }, 2000);
+      }, 3000);
 
       const item: QueuedAnalysisItem = {
         id: `paste_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
