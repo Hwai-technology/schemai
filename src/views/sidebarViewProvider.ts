@@ -310,3 +310,4 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
 </html>`;
   }
 }
+

@@ -108,3 +108,4 @@ If a critical bug is discovered in a published version:
      ```bash
      npx ovsx unpublish schemai-team.schema-ai@0.1.0 -p $OVSX_PAT
      ```
+
