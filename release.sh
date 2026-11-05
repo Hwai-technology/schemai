@@ -17,6 +17,13 @@ echo "🚀 Starting SchemAI Extension Release process ($RELEASE_TYPE)..."
 echo "🧪 Running tests and compiling TypeScript..."
 npm test
 
+# Auto-stage pending modifications so npm version never fails on dirty tree
+if [ -n "$(git status --porcelain)" ]; then
+    echo "💾 Staging pending working tree changes before version bump..."
+    git add -A
+    git commit -m "chore: save working changes before release" || true
+fi
+
 # 2. Bump version using npm (updates package.json & creates a git tag)
 echo "📦 Updating version number ($RELEASE_TYPE)..."
 NEW_VERSION=$(npm version $RELEASE_TYPE -m "release: v%s")

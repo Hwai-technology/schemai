@@ -49,10 +49,30 @@ npm run package
 بعد تشغيل أمر `npm run package`، سيظهر ملف الحزمة في المجلد الرئيسي باسم:
 `schema-ai-X.Y.Z.vsix`
 
-### لتثبيته وتجربته فوراً في VS Code لديك:
-```bash
-code --install-extension schema-ai-0.1.1.vsix --force
-```
+### لتثبيته وتجربته فوراً في بيئة العمل (VS Code أو Antigravity):
+
+#### الخيار 1: عبر سطر الأوامر (Terminal)
+* **في VS Code:**
+  ```bash
+  code --install-extension schema-ai-0.1.1.vsix --force
+  ```
+* **في Antigravity IDE:**
+  ```bash
+  antigravity --install-extension schema-ai-0.1.1.vsix --force
+  ```
+* **في VSCodium أو Cursor:**
+  ```bash
+  codium --install-extension schema-ai-0.1.1.vsix --force
+  # أو
+  cursor --install-extension schema-ai-0.1.1.vsix --force
+  ```
+
+#### الخيار 2: عبر واجهة البرنامج (GUI)
+1. افتح **VS Code** أو **Antigravity**.
+2. افتح تبويب الإضافات (`Extensions`) عبر الاختصار `Ctrl+Shift+X`.
+3. اضغط على القائمة ثلاثية النقاط **`...`** في أعلى تبويب الإضافات.
+4. اختر **`Install from VSIX...`**.
+5. حدد ملف الحزمة `schema-ai-0.1.1.vsix` وسيتم تفعيل الإضافة فوراً!
 
 ---
 
@@ -96,3 +116,4 @@ code --install-extension schema-ai-0.1.1.vsix --force
 
 ---
 **فريق SchemAI 🛡️**
+

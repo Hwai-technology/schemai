@@ -79,18 +79,31 @@ npm run package
 This will produce the installation file in the repository root:
 `schema-ai-X.Y.Z.vsix`
 
-### Installing & Testing in VS Code:
-To install and test your newly built package in your local VS Code editor:
-```bash
-code --install-extension schema-ai-0.1.1.vsix --force
-```
+### Installing & Testing Locally (VS Code & Antigravity IDE):
 
-for antigravity:
-```bash
-antigravity
+#### Option A: Using Command Line (CLI)
+* **For VS Code:**
+  ```bash
+  code --install-extension schema-ai-0.1.1.vsix --force
+  ```
+* **For Antigravity IDE:**
+  ```bash
+  antigravity --install-extension schema-ai-0.1.1.vsix --force
+  ```
+* **For VSCodium / Cursor:**
+  ```bash
+  codium --install-extension schema-ai-0.1.1.vsix --force
+  # or
+  cursor --install-extension schema-ai-0.1.1.vsix --force
+  ```
 
-```
-Or open VS Code, navigate to **Extensions (`Ctrl+Shift+X`)** ➡️ click the three dots **`...`** (Views and More Actions) ➡️ **`Install from VSIX...`** ➡️ select `schema-ai-0.1.1.vsix`.
+#### Option B: Using the IDE User Interface (GUI)
+1. Open **VS Code** or **Antigravity IDE**.
+2. Open the Extensions view (`Ctrl+Shift+X` or side activity bar).
+3. Click the three dots menu **`...`** (More Actions) in the top-right corner of the Extensions pane.
+4. Select **`Install from VSIX...`**.
+5. Choose your generated `schema-ai-0.1.1.vsix` file.
+6. The extension will install and activate immediately!
 
 ---
 
