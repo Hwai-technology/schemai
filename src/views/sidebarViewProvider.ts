@@ -6,9 +6,11 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'schemaAI.sidebarView';
   private _view?: vscode.WebviewView;
   private historyManager: HistoryManager;
+  private extensionUri?: vscode.Uri;
 
-  constructor(historyManager: HistoryManager) {
+  constructor(historyManager: HistoryManager, extensionUri?: vscode.Uri) {
     this.historyManager = historyManager;
+    this.extensionUri = extensionUri;
 
     this.historyManager.onHistoryChanged(() => {
       this.updateView();
@@ -23,7 +25,8 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
     this._view = webviewView;
 
     webviewView.webview.options = {
-      enableScripts: true
+      enableScripts: true,
+      localResourceRoots: this.extensionUri ? [this.extensionUri] : undefined
     };
 
     webviewView.webview.html = this.getHtmlContent();
@@ -67,6 +70,10 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
 
     const recentDetections = history.slice(0, 4);
 
+    const logoUri = this._view && this.extensionUri
+      ? this._view.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'schema_ai_team_logo.jpg'))
+      : '';
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -91,30 +98,24 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
       padding: 12px;
       font-size: 13px;
     }
-    /* Brand Header */
+    /* Brand Header with New 1:1 Unified Logo */
     .brand-header {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       padding-bottom: 14px;
       border-bottom: 1px solid var(--border);
       margin-bottom: 14px;
     }
-    .brand-logo {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, var(--cyan-neon), var(--purple-neon));
+    .brand-logo-img {
+      width: 36px;
+      height: 36px;
       border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      font-size: 18px;
-      color: #000;
-      box-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+      box-shadow: 0 0 14px rgba(0, 210, 255, 0.45);
+      object-fit: cover;
     }
     .brand-title {
-      font-size: 18px;
+      font-size: 19px;
       font-weight: 800;
       color: var(--text-bright);
       letter-spacing: -0.5px;
@@ -225,7 +226,7 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
 <body>
   <!-- Brand Header -->
   <div class="brand-header">
-    <div class="brand-logo">S</div>
+    ${logoUri ? `<img src="${logoUri}" alt="SchemAI Logo" class="brand-logo-img" />` : '<div class="brand-logo-img" style="background:#00d2ff;"></div>'}
     <div class="brand-title">SchemAI</div>
   </div>
 
@@ -310,4 +311,3 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
 </html>`;
   }
 }
-

@@ -33,7 +33,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const historyManager = HistoryManager.initialize(context.workspaceState);
   
   // Register Interactive Cyberpunk Sidebar (SchemAI View Provider)
-  const sidebarProvider = new SchemAISidebarViewProvider(historyManager);
+  const sidebarProvider = new SchemAISidebarViewProvider(historyManager, context.extensionUri);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       SchemAISidebarViewProvider.viewType,
