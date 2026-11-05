@@ -13,6 +13,9 @@ jobs:
   release:
     name: Build, Test & Publish SchemAI
     runs-on: ubuntu-latest
+    env:
+      VS_MARKETPLACE_PAT: ${{ secrets.VS_MARKETPLACE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
     steps:
       - name: 📥 Checkout Repository
@@ -46,13 +49,9 @@ jobs:
           prerelease: false
 
       - name: 🌐 Publish to Visual Studio Marketplace
-        if: ${{ env.VS_MARKETPLACE_PAT != '' }}
-        env:
-          VS_MARKETPLACE_PAT: ${{ secrets.VS_MARKETPLACE_PAT }}
-        run: npx vsce publish -p ${{ secrets.VS_MARKETPLACE_PAT }}
+        if: env.VS_MARKETPLACE_PAT != ''
+        run: npx vsce publish -p ${{ env.VS_MARKETPLACE_PAT }}
 
       - name: 🌐 Publish to Open VSX Registry
-        if: ${{ env.OVSX_PAT != '' }}
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: npx ovsx publish *.vsix -p ${{ secrets.OVSX_PAT }}
+        if: env.OVSX_PAT != ''
+        run: npx ovsx publish *.vsix -p ${{ env.OVSX_PAT }}
