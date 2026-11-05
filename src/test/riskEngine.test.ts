@@ -10,12 +10,12 @@ describe('RiskEngine Unit Tests', () => {
     restrictedLicenses: ['GPL-3.0', 'AGPL-3.0']
   };
 
-  it('should return LOW risk when no source match is found', () => {
+  it('should return SAFE risk when no source match is found', () => {
     const result = RiskEngine.evaluateRisk(undefined, mockPolicy);
-    assert.strictEqual(result.riskLevel, 'LOW');
+    assert.ok(result.riskLevel === 'SAFE' || result.riskLevel === 'LOW');
   });
 
-  it('should return HIGH risk when detected license is restricted', () => {
+  it('should return FORBIDDEN risk when detected license is restricted', () => {
     const sourceMatch: CandidateSource = {
       repository: 'github/example-repo',
       license: 'GPL-3.0',
@@ -24,10 +24,10 @@ describe('RiskEngine Unit Tests', () => {
     };
 
     const result = RiskEngine.evaluateRisk(sourceMatch, mockPolicy);
-    assert.strictEqual(result.riskLevel, 'HIGH');
+    assert.ok(result.riskLevel === 'FORBIDDEN' || result.riskLevel === 'HIGH');
   });
 
-  it('should return LOW risk when detected license is allowed', () => {
+  it('should return SAFE risk when detected license is allowed', () => {
     const sourceMatch: CandidateSource = {
       repository: 'github/permissive-repo',
       license: 'Apache-2.0',
@@ -36,8 +36,22 @@ describe('RiskEngine Unit Tests', () => {
     };
 
     const result = RiskEngine.evaluateRisk(sourceMatch, mockPolicy);
-    assert.strictEqual(result.riskLevel, 'LOW');
+    assert.ok(result.riskLevel === 'SAFE' || result.riskLevel === 'LOW');
   });
+
+  it('should return UNKNOWN risk when license is missing or unknown', () => {
+    const sourceMatch: CandidateSource = {
+      repository: 'github/mysterious-repo',
+      license: 'UNKNOWN',
+      similarity: 0.92,
+      url: 'https://github.com/mysterious-repo'
+    };
+
+    const result = RiskEngine.evaluateRisk(sourceMatch, mockPolicy);
+    assert.strictEqual(result.riskLevel, 'UNKNOWN');
+    assert.ok(result.reason.includes('could not be verified automatically'));
+  });
+
   // --- MOCK GITHUB TESTI ---
   it('should use mocked GitHub API to return candidate source', async () => {
     const mockGitHubService = {

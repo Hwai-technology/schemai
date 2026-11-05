@@ -33,6 +33,34 @@
       {
         "command": "schemaAI.analyzeSelection",
         "title": "SchemAI: Analyze Selected Code"
+      },
+      {
+        "command": "schemaAI.checkLastPasted",
+        "title": "SchemAI: Check Last Pasted Code Risk"
+      },
+      {
+        "command": "schemaAI.showAuditLog",
+        "title": "SchemAI: View Paste & License History (Audit Log)"
+      },
+      {
+        "command": "schemaAI.login",
+        "title": "SchemAI: Sign in to GitHub"
+      },
+      {
+        "command": "schemaAI.manageAccount",
+        "title": "SchemAI: Manage GitHub Account"
+      },
+      {
+        "command": "schemaAI.disconnect",
+        "title": "SchemAI: Disconnect GitHub Account"
+      },
+      {
+        "command": "schemaAI.clearHistory",
+        "title": "SchemAI: Clear Audit History"
+      },
+      {
+        "command": "schemaAI.markFalsePositive",
+        "title": "SchemAI: Mark Alert as False Positive"
       }
     ],
     "menus": {
@@ -40,7 +68,41 @@
         {
           "command": "schemaAI.analyzeSelection",
           "when": "editorHasSelection",
-          "group": "1_modification"
+          "group": "1_modification@1"
+        },
+        {
+          "command": "schemaAI.checkLastPasted",
+          "when": "editorTextFocus",
+          "group": "1_modification@2"
+        },
+        {
+          "command": "schemaAI.showAuditLog",
+          "when": "editorTextFocus",
+          "group": "1_modification@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "schemaAI.markFalsePositive",
+          "when": "view == schemaAI.auditHistoryView && viewItem == pasteAuditEntry",
+          "group": "inline"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "schema-ai-sidebar",
+          "title": "SchemAI",
+          "icon": "media/schema_ai_team_logo.jpg"
+        }
+      ]
+    },
+    "views": {
+      "schema-ai-sidebar": [
+        {
+          "id": "schemaAI.auditHistoryView",
+          "name": "Paste & Risk Tracker"
         }
       ]
     },
@@ -55,7 +117,8 @@
         "schemaAI.githubToken": {
           "type": "string",
           "default": "",
-          "description": "Optional GitHub Personal Access Token to avoid rate limits."
+          "markdownDeprecationMessage": "Deprecated. Sign in with GitHub or store secrets via SchemAI SecretStorage.",
+          "description": "Optional legacy GitHub Personal Access Token."
         }
       }
     }

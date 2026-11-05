@@ -1,3 +1,5 @@
+import * as crypto from 'crypto';
+
 export class CodeAnalyzer {
   /**
    * Determines if the given text is likely source code (heuristics)
@@ -37,5 +39,15 @@ export class CodeAnalyzer {
       .trim();
 
     return normalized;
+  }
+
+  /**
+   * Generates a deterministic SHA-256 hash for deduplication and cache indexing
+   */
+  public static generateHash(fingerprint: string): string {
+    return crypto
+      .createHash('sha256')
+      .update(fingerprint)
+      .digest('hex');
   }
 }

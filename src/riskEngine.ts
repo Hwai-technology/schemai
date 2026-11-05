@@ -10,38 +10,44 @@ export class RiskEngine {
   ): { riskLevel: RiskLevel; reason: string } {
     if (!sourceMatch) {
       return {
-        riskLevel: 'LOW',
+        riskLevel: 'SAFE',
         reason: 'No matching external repository found above similarity threshold.'
       };
     }
 
-    const detectedLicense = sourceMatch.license.toUpperCase();
-    const projectLicense = policy.projectLicense.toUpperCase();
+    const detectedLicense = (sourceMatch.license || 'UNKNOWN').toUpperCase();
+    const projectLicense = (policy.projectLicense || 'MIT').toUpperCase();
 
-    if (detectedLicense === 'UNKNOWN') {
+    // 1. Evidence-based: If license is unknown, never guess GPL or declare safe
+    if (detectedLicense === 'UNKNOWN' || detectedLicense === '') {
       return {
         riskLevel: 'UNKNOWN',
-        reason: 'Source identified, but license could not be verified automatically.'
+        reason: `Source repository identified (${sourceMatch.repository}), but license could not be verified automatically.`
       };
     }
 
-    if (policy.restrictedLicenses.map(l => l.toUpperCase()).includes(detectedLicense)) {
+    // 2. Check if detected license is explicitly restricted by project policy
+    const restrictedList = (policy.restrictedLicenses || []).map(l => l.toUpperCase());
+    if (restrictedList.includes(detectedLicense)) {
       return {
-        riskLevel: 'HIGH',
-        reason: `Detected license (${sourceMatch.license}) is restricted by project policy (${policy.projectLicense}).`
+        riskLevel: 'FORBIDDEN',
+        reason: `Detected license (${sourceMatch.license}) is restricted by project policy (${policy.projectLicense}). Copying this code may force copyleft obligations.`
       };
     }
 
-    if (detectedLicense !== projectLicense && !policy.allowedLicenses.map(l => l.toUpperCase()).includes(detectedLicense)) {
+    // 3. Check if detected license matches or is explicitly allowed
+    const allowedList = (policy.allowedLicenses || []).map(l => l.toUpperCase());
+    if (detectedLicense === projectLicense || allowedList.includes(detectedLicense)) {
       return {
-        riskLevel: 'MEDIUM',
-        reason: `Potential compatibility issue between external license (${sourceMatch.license}) and project policy (${policy.projectLicense}).`
+        riskLevel: 'SAFE',
+        reason: `Detected license (${sourceMatch.license}) is compatible with project policy (${policy.projectLicense}).`
       };
     }
 
+    // 4. Incompatible or Requires Review (Weak Copyleft / Non-standard)
     return {
-      riskLevel: 'LOW',
-      reason: `Detected license (${sourceMatch.license}) is compatible with project policy (${policy.projectLicense}).`
+      riskLevel: 'WARNING',
+      reason: `Potential compatibility or attribution requirement between external license (${sourceMatch.license}) and project policy (${policy.projectLicense}).`
     };
   }
 }

@@ -17,4 +17,12 @@ describe('CodeAnalyzer Unit Tests', () => {
     const fingerprint = CodeAnalyzer.generateFingerprint(code);
     assert.strictEqual(fingerprint, 'const x = 10;');
   });
+
+  it('should generate a 64-character SHA-256 hash for fingerprint deduplication', () => {
+    const fingerprint = 'const x = 10;';
+    const hash = CodeAnalyzer.generateHash(fingerprint);
+    assert.strictEqual(typeof hash, 'string');
+    assert.strictEqual(hash.length, 64);
+    assert.strictEqual(hash, CodeAnalyzer.generateHash(fingerprint)); // deterministic
+  });
 });
