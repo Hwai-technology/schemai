@@ -44,7 +44,6 @@ La extensión se activa dinámicamente al trabajar con cualquiera de los siguien
 * **David Vilaseca Pareja**
 * **Abdul Rafey Hussain Parveen**
 * **Sergio Bueno Gómez**
-* **Suliman Mimon Youjili**
 * **Leon Skalczynski**
 * **Yunus Emre Köroğlu**
 * **Yusuf Mahdy Mamdouh**

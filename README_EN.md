@@ -44,7 +44,6 @@ The extension activates dynamically when working with any of the following langu
 * **David Vilaseca Pareja**
 * **Abdul Rafey Hussain Parveen**
 * **Sergio Bueno Gómez**
-* **Suliman Mimon Youjili**
 * **Leon Skalczynski**
 * **Yunus Emre Köroğlu**
 * **Yusuf Mahdy Mamdouh**
