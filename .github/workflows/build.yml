@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      VS_MARKETPLACE_PAT: ${{ secrets.VS_MARKETPLACE_PAT }}
 
     strategy:
       matrix:
@@ -43,6 +44,10 @@ jobs:
         with:
           name: schema-ai-vsix-${{ matrix.node-version }}
           path: '*.vsix'
+
+      - name: Publish to Visual Studio Marketplace
+        if: env.VS_MARKETPLACE_PAT != '' && github.ref == 'refs/heads/main'
+        run: npx vsce publish -p ${{ env.VS_MARKETPLACE_PAT }}
 
       - name: Publish to OpenVSX
         if: env.OVSX_PAT != '' && github.ref == 'refs/heads/main'
