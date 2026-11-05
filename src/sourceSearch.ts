@@ -157,7 +157,7 @@ export class SourceSearchEngine {
           url: item.html_url || `https://github.com/${item.repository?.full_name}`,
           license: actualLicense,
           similarity,
-          spdxId
+         spdxId
         };
       }
     } catch (err) {
