@@ -38,3 +38,4 @@ jobs:
 
       - name: 📦 Validate VSIX Packaging
         run: npx vsce package --allow-missing-repository
+
