@@ -13,6 +13,8 @@ import { HistoryTreeProvider } from './history/historyTreeProvider';
 import { DiagnosticsManager } from './diagnostics/diagnosticsManager';
 import { EditorDecorator } from './diagnostics/editorDecorator';
 import { SchemAIHoverProvider } from './diagnostics/hoverProvider';
+import { SchemAISidebarViewProvider } from './views/sidebarViewProvider';
+import { RiskCardPanel } from './views/riskCardPanel';
 
 export async function activate(context: vscode.ExtensionContext) {
   console.log('SchemAI extension activating...');
@@ -29,6 +31,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // 3. Initialize History & Persistent Audit Storage (HU-16 GAP)
   const historyManager = HistoryManager.initialize(context.workspaceState);
+  
+  // Register Interactive Cyberpunk Sidebar (SchemAI View Provider)
+  const sidebarProvider = new SchemAISidebarViewProvider(historyManager);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      SchemAISidebarViewProvider.viewType,
+      sidebarProvider
+    )
+  );
+
+  // Also support TreeDataProvider for compatibility
   const historyTreeProvider = new HistoryTreeProvider(historyManager);
   vscode.window.registerTreeDataProvider('schemaAI.auditHistoryView', historyTreeProvider);
 
@@ -66,10 +79,15 @@ export async function activate(context: vscode.ExtensionContext) {
     // Update Diagnostics
     diagnosticsManager.updateDiagnostic(item.documentUri, item.range, result);
 
-    // Apply editor decorations if editor is active
+    // Apply glowing border box & underline decorations in the editor
     const activeEditor = vscode.window.activeTextEditor;
     if (activeEditor && activeEditor.document.uri.toString() === item.documentUri.toString() && item.range) {
       editorDecorator.applyDecoration(activeEditor, item.range, result);
+    }
+
+    // Auto-reveal the Live Interactive Risk Card for FORBIDDEN / Critical Risks
+    if (result.riskLevel === 'FORBIDDEN' || result.riskLevel === 'HIGH') {
+      RiskCardPanel.show(entry);
     }
 
     // Show Notification Alert for High / Medium risks or manual runs
@@ -162,7 +180,7 @@ function registerCommands(
         return;
       }
 
-      showEntryQuickDetail(lastEntry, historyManager);
+      RiskCardPanel.show(lastEntry);
     })
   );
 
@@ -194,7 +212,7 @@ function registerCommands(
       });
 
       if (selected) {
-        showEntryQuickDetail(selected.entry, historyManager);
+        RiskCardPanel.show(selected.entry);
       }
     })
   );
@@ -202,7 +220,7 @@ function registerCommands(
   // Command: Show Single Audit Detail (HU-12)
   context.subscriptions.push(
     vscode.commands.registerCommand('schemaAI.showAuditDetail', (entry: PasteAuditEntry) => {
-      showEntryQuickDetail(entry, historyManager);
+      RiskCardPanel.show(entry);
     })
   );
 
@@ -251,67 +269,6 @@ function registerCommands(
   );
 }
 
-function showEntryQuickDetail(entry: PasteAuditEntry, historyManager: HistoryManager) {
-  const panel = vscode.window.createWebviewPanel(
-    'schemaAIDetail',
-    `SchemAI: ${entry.fileName} (${entry.riskLevel})`,
-    vscode.ViewColumn.Beside,
-    { enableScripts: true }
-  );
-
-  const statusColor =
-    entry.riskLevel === 'FORBIDDEN' || entry.riskLevel === 'HIGH'
-      ? '#f85149'
-      : entry.riskLevel === 'WARNING' || entry.riskLevel === 'MEDIUM'
-      ? '#d29922'
-      : entry.riskLevel === 'UNKNOWN'
-      ? '#8b949e'
-      : '#2ea043';
-
-  panel.webview.html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; line-height: 1.6; }
-    .badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: bold; color: white; background: ${statusColor}; }
-    .card { background: var(--vscode-editor-background); border: 1px solid var(--vscode-widget-border); border-radius: 6px; padding: 16px; margin: 16px 0; }
-    pre { background: var(--vscode-textBlockCode-background); padding: 12px; border-radius: 4px; overflow-x: auto; }
-    button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
-    button:hover { background: var(--vscode-button-hoverBackground); }
-    a { color: var(--vscode-textLink-foreground); }
-  </style>
-</head>
-<body>
-  <h2>🛡️ SchemAI Analysis Audit Details</h2>
-  <p><span class="badge">${entry.riskLevel}</span> <strong>Status:</strong> ${entry.reviewStatus} · <strong>Time:</strong> ${new Date(entry.timestamp).toLocaleString()}</p>
-  
-  <div class="card">
-    <h3>📋 Summary</h3>
-    <p><strong>Target File:</strong> <code>${entry.filePath}</code></p>
-    <p><strong>Detected License:</strong> <code>${entry.sourceMatch?.license || 'UNKNOWN'}</code></p>
-    <p><strong>External Source:</strong> <a href="${entry.sourceMatch?.url || '#'}">${entry.sourceMatch?.repository || 'External match'}</a></p>
-    <p><strong>Reason:</strong> ${entry.reason}</p>
-    ${entry.reviewNotes ? `<p><strong>Review Notes:</strong> <em>${entry.reviewNotes}</em></p>` : ''}
-  </div>
-
-  <div class="card">
-    <h3>🔍 Snippet Preview</h3>
-    <pre><code>${escapeHtml(entry.snippetPreview)}</code></pre>
-  </div>
-</body>
-</html>`;
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
 function displayResultNotification(
   entry: PasteAuditEntry,
   result: AnalysisResult
@@ -339,7 +296,7 @@ function displayResultNotification(
 
 function handleNotificationAction(selection: string | undefined, entry: PasteAuditEntry) {
   if (selection === 'View Details') {
-    vscode.commands.executeCommand('schemaAI.showAuditDetail', entry);
+    RiskCardPanel.show(entry);
   } else if (selection === 'Open Source' && entry.sourceMatch?.url) {
     vscode.env.openExternal(vscode.Uri.parse(entry.sourceMatch.url));
   } else if (selection === 'Mark Reviewed') {
