@@ -30,6 +30,6 @@
   - Policy configuration from `src/config/`.
 
 ## 5. Development & Ownership Rules
-- Changes to this directory require David's review and approval.
+- Any team member may change this directory through a pull request. David, as owner, is kept informed; the PR is approved by the reviewer assigned in ClickUp (`rev-*` tag), never by its author.
 - The risk engine must be comprehensively covered with matrix compatibility test suites.
 

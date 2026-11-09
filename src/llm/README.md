@@ -25,5 +25,5 @@
   - Credentials from `src/security/`.
 
 ## 5. Development & Ownership Rules
-- Changes to this directory require Sergio's review and approval.
+- Any team member may change this directory through a pull request. Sergio, as owner, is kept informed; the PR is approved by the reviewer assigned in ClickUp (`rev-*` tag), never by its author.
 - All LLM interactions must fail gracefully with descriptive error handling when unconfigured or offline.

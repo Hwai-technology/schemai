@@ -26,6 +26,6 @@
   ```
 
 ## 5. Development & Ownership Rules
-- Changes to this directory require Yusuf's review and approval.
+- Any team member may change this directory through a pull request. Yusuf, as owner, is kept informed; the PR is approved by the reviewer assigned in ClickUp (`rev-*` tag), never by its author.
 - Code must adhere to strict zero-leakage security standards.
 

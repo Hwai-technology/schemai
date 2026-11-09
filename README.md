@@ -6,7 +6,7 @@ SchemAI is a Visual Studio Code extension designed to detect external code, sear
 
 ## 1. Project Purpose & Sprint 1 Initialization
 
-This repository has been initialized from a clean, orphan development branch (`ddevelop`) for the official start of Sprint 1. The prototype codebase serves as architectural reference in a preserved branch, while Sprint 1 development follows strict engineering rigor, modular feature isolation, test-driven progression, and mandatory peer review.
+This repository has been initialized from a clean, orphan development branch (`develop`) for the official start of Sprint 1. The prototype codebase serves as architectural reference in a preserved branch, while Sprint 1 development follows strict engineering rigor, modular feature isolation, test-driven progression, and mandatory peer review.
 
 Target release for Sprint 1 is **v0.1.0** delivered via GitHub Releases (.vsix).
 
@@ -40,7 +40,7 @@ project/
 │   ├── network/             # Resilient HTTP client, rate limits, retry logic
 │   └── test/                # Test harness, shared fixtures, CI suites
 │
-└── .team-work/              # Private local developer staging (git-ignored)
+└── .team-work/              # Prototype reference code and personal sprint plans (shared)
 ```
 
 Each feature directory initially contains a specification `README.md` defining ownership, assigned ClickUp User Stories (HUs), interfaces, and boundaries.
@@ -62,7 +62,7 @@ Feature modules are strictly owned by designated team members:
 | **Sergio** | `src/llm/`, `src/quickfix/` | HU-14, HU-15 | LLM explanation provider, quick-fix remediation actions |
 | **Yunus** | `src/network/`, `src/test/` | HU-10, QA, CI | Network resilience (offline, rate limit, retry), test framework, CI pipeline |
 
-For comprehensive ownership and integration rules, refer to [FEATURES.md](file:///c:/Users/ahahm/Desktop/work%20Ahmet%20brother/extention/FEATURES.md).
+For comprehensive ownership and integration rules, refer to [FEATURES.md](FEATURES.md).
 
 ---
 
@@ -70,13 +70,13 @@ For comprehensive ownership and integration rules, refer to [FEATURES.md](file:/
 
 Development strictly follows an isolated branch lifecycle:
 
-1. **Base Branch**: All development branches originate from and target `ddevelop`.
+1. **Base Branch**: All development branches originate from and target `develop`.
 2. **Branch Naming**: Feature branches must strictly follow the format:
    ```bash
    feature/HU-xx-Tn
    ```
    (e.g., `feature/HU-05-T1`, `feature/HU-08-T2`).
-3. **No Direct Pushes**: Direct commits or pushes to `ddevelop` are forbidden.
+3. **No Direct Pushes**: Direct commits or pushes to `develop` are forbidden.
 4. **Independent History**: The `main` branch preserves historical prototype work and must remain untouched.
 
 ---
@@ -87,7 +87,8 @@ Every task delivered in Sprint 1 must adhere to the following workflow:
 
 - **Test-First (TDD)**: The initial commit of every feature branch must contain the unit or integration test (red phase).
 - **Targeted Implementation**: Port or implement only the exact code necessary to satisfy the assigned HU. Do not bulk-copy prototype files.
-- **Ownership Respect**: Developers modify only their designated feature directory.
+- **Ownership Respect**: Developers work in their own feature directory. Changes elsewhere go through a reviewed PR and the directory owner is informed (collective ownership, adapted).
+- **Sprint plans**: the day-by-day plan of each member is in `.team-work/<name>/PLAN.md`; the team view is in [`.team-work/SPRINT-1-PLAN.md`](.team-work/SPRINT-1-PLAN.md).
 - **Cross-Feature PRs**: Modifications affecting shared coordination files (`src/types.ts`, `src/extension.ts`) or another owner's directory require explicit approval from the affected owner.
 - **Mandatory PR Criteria**:
   - Pull request linked to corresponding ClickUp HU.

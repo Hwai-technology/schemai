@@ -25,5 +25,5 @@
   - Risk assessment objects produced by `src/licenses/`.
 
 ## 5. Development & Ownership Rules
-- Changes to this directory require Abdul's review and approval.
+- Any team member may change this directory through a pull request. Abdul, as owner, is kept informed; the PR is approved by the reviewer assigned in ClickUp (`rev-*` tag), never by its author.
 - Ensure all diagnostics and decorations are properly disposed of when documents close.
