@@ -1,35 +1,35 @@
-# دليل مهام أحمد — Ahmet (COORD, HU-05, HU-06)
+# Task guide — Ahmet (COORD, HU-05, HU-06)
 
-## 1. نطاق المسؤولية والمجلدات
-- **المجلدات المخصصة**: `src/core/` و `src/analysis/`
-- **قصص المستخدم (ClickUp HUs)**:
-  - **COORD**: تنسيق دورة حياة الإضافة، هيكل `extension.ts` المشترك، تعريف الواجهات المشتركة `types.ts`.
-  - **HU-05**: مراقبة اللصق غير المتزامن (`PasteMonitor`) وطابور التحليل غير المحظور (`AnalysisQueue`).
-  - **HU-06**: الأوامر اليدوية (`schemaAI.analyzeSelection`, `schemaAI.checkLastPasted`).
-
----
-
-## 2. ملفات الكود المرجعي المنظمة في هذا المجلد
-- `analysis/codeAnalyzer.ts`: فحص الكود، توليد البصمات (Fingerprinting)، تجريد التعليقات والفراغات، وحساب تشابه الرموز.
-- `analysis/pasteMonitor.ts`: الاستماع لأحداث لصق النصوص وتحديد الأجزاء المشبوهة.
-- `analysis/analysisQueue.ts`: طابور معالجة غير متزامن مع تفريغ وإلغاء الطلبات المتكررة (Debounce & Cancellation).
-- `core/coordinator.ts`: نموذج تسجيل الأوامر والربط مع الإضافة.
+## 1. Scope of responsibility and folders
+- **Assigned folders**: `src/core/` and `src/analysis/`
+- **User stories (ClickUp HUs)**:
+  - **COORD**: Coordinates the extension lifecycle, the shared `extension.ts` structure, and the definition of the shared interfaces in `types.ts`.
+  - **HU-05**: Asynchronous paste monitoring (`PasteMonitor`) and non-blocking analysis queue (`AnalysisQueue`).
+  - **HU-06**: Manual commands (`schemaAI.analyzeSelection`, `schemaAI.checkLastPasted`).
 
 ---
 
-## 3. خطة العمل وتطبيق الـ TDD (من يوم الإثنين)
-1. إنشاء فرع للمهمة انطلاقاً من `develop`:
+## 2. Reference code files organized in this folder
+- `analysis/codeAnalyzer.ts`: Code inspection, fingerprint generation (Fingerprinting), stripping of comments and whitespace, and token similarity calculation.
+- `analysis/pasteMonitor.ts`: Listens for text paste events and identifies suspicious fragments.
+- `analysis/analysisQueue.ts`: Asynchronous processing queue with debouncing and cancellation of repeated requests (Debounce & Cancellation).
+- `core/coordinator.ts`: Command registration template and wiring to the extension.
+
+---
+
+## 3. Work plan and applying TDD (from Monday)
+1. Create a task branch from `develop`:
    ```bash
    git checkout develop
    git pull origin develop
    git checkout -b feature/HU-05-T1
    ```
-2. كتابة اختبار الوحدة أولاً (Red Phase):
-   - اختبار كشف أحداث اللصق وتوليد البصمة.
-   - التحقق من عدم حظر واجهة المستخدم.
-3. نقل وتنقيح الكود المرجعي من هذا المجلد إلى `src/analysis/` أو `src/core/` (Green Phase).
-4. تشغيل الاختبارات والتأكد من نجاحها بالكامل:
+2. Write the unit test first (Red Phase):
+   - Test detection of paste events and fingerprint generation.
+   - Verify the user interface is not blocked.
+3. Move and refine the reference code from this folder into `src/analysis/` or `src/core/` (Green Phase).
+4. Run the tests and make sure they all pass:
    ```bash
    npm test
    ```
-5. رفع الفرع وفتح Pull Request إلى `develop`، وتعيين المراجع من علامة `rev-` في ClickUp.
+5. Push the branch and open a Pull Request to `develop`, and assign the reviewer from the `rev-` tag in ClickUp.

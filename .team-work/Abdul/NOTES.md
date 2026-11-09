@@ -1,34 +1,34 @@
-# دليل مهام عبدول — Abdul (HU-11, HU-12)
+# Task guide — Abdul (HU-11, HU-12)
 
-## 1. نطاق المسؤولية والمجلدات
-- **المجلد المخصص**: `src/alerts/`
-- **قصص المستخدم (ClickUp HUs)**:
-  - **HU-11**: تنبيهات المحرر والتشخيصات (`DiagnosticsManager`, `EditorDecorator`).
-  - **HU-12**: موفر التمرير التفاعلي (`SchemAIHoverProvider`) وبطاقة عرض المخاطر (`RiskCardPanel`).
-
----
-
-## 2. ملفات الكود المرجعي المنظمة في هذا المجلد
-- `alerts/diagnosticsManager.ts`: إدارة تشخيصات VS Code (`vscode.DiagnosticCollection`) وعرض التحذيرات/الأخطاء تحت الأسطر المنسوخة.
-- `alerts/editorDecorator.ts`: رسم الحدود المتوهجة (Glowing Code Box) والخط المتموج تحت الكود الخطر.
-- `alerts/hoverProvider.ts`: تزويد نافذة التمرير التفاعلية بتفاصيل الرخصة وحالتها وروابط فتح المستودع.
-- `alerts/riskCardPanel.ts`: بطاقة الويب التفاعلية (Webview Panel) لعرض مصفوفة التوافق وتفاصيل الرخصة.
+## 1. Scope of responsibility and folders
+- **Assigned folder**: `src/alerts/`
+- **User stories (ClickUp HUs)**:
+  - **HU-11**: Editor alerts and diagnostics (`DiagnosticsManager`, `EditorDecorator`).
+  - **HU-12**: Interactive hover provider (`SchemAIHoverProvider`) and risk display card (`RiskCardPanel`).
 
 ---
 
-## 3. خطة العمل وتطبيق الـ TDD (من يوم الإثنين)
-1. إنشاء فرع للمهمة انطلاقاً من `develop`:
+## 2. Reference code files organized in this folder
+- `alerts/diagnosticsManager.ts`: Manages VS Code diagnostics (`vscode.DiagnosticCollection`) and shows warnings/errors under the copied lines.
+- `alerts/editorDecorator.ts`: Draws the glowing border (Glowing Code Box) and the squiggly underline beneath risky code.
+- `alerts/hoverProvider.ts`: Fills the interactive hover window with the license details, its status and links to open the repository.
+- `alerts/riskCardPanel.ts`: Interactive web card (Webview Panel) showing the compatibility matrix and license details.
+
+---
+
+## 3. Work plan and applying TDD (from Monday)
+1. Create a task branch from `develop`:
    ```bash
    git checkout develop
    git pull origin develop
    git checkout -b feature/HU-11-T1
    ```
-2. كتابة اختبار الوحدة أولاً (Red Phase):
-   - التحقق من إضافة الـ Diagnostic في المجموعة عند ورود نتيجة FORBIDDEN أو HIGH.
-   - التحقق من مسح التنبيه عند SAFE.
-3. نقل وتنقيح الكود المرجعي إلى `src/alerts/` (Green Phase).
-4. تشغيل الاختبارات:
+2. Write the unit test first (Red Phase):
+   - Verify a Diagnostic is added to the collection when a FORBIDDEN or HIGH result arrives.
+   - Verify the alert is cleared on SAFE.
+3. Move and refine the reference code into `src/alerts/` (Green Phase).
+4. Run the tests:
    ```bash
    npm test
    ```
-5. فتح Pull Request إلى `develop` وتعيين المراجع من علامة `rev-` في ClickUp.
+5. Open a Pull Request to `develop` and assign the reviewer from the `rev-` tag in ClickUp.

@@ -1,44 +1,44 @@
-# دليل مهام ديفيد — David (HU-08, HU-09)
+# Task guide — David (HU-08, HU-09)
 
-## 1. نطاق المسؤولية والمجلدات
-- **المجلد المخصص**: `src/licenses/`
-- **قصص المستخدم (ClickUp HUs)**:
-  - **HU-08**: كاشف الرخص والـ SPDX ID (`LicenseDetector`) من رؤوس الملفات وميتاداتا GitHub.
-  - **HU-09**: محرك تقييم المخاطر (`RiskEngine`) ومصفوفة توافق الرخص البرمجية مفتوحة المصدر.
-
----
-
-## 2. كيفية فصل الكود من النموذج المبدئي
-1. **تم استخراج منطق فحص الرخص من `sourceSearch.ts`**:
-   - كشف إشعارات حقوق الملكية الصريحة المضمنة (GPL-3.0, MIT, Apache-2.0).
-   - استخراج `spdx_id` من بيانات مستودع GitHub (`/repos/:owner/:repo`).
-2. **محرك تقييم المخاطر `riskEngine.ts`**:
-   - مطابقة الرخصة المكتشفة مع سياسة المشروع (`SAFE`, `WARNING`, `FORBIDDEN`, `UNKNOWN`).
-   - تصنيف التراخيص الإلزامية الصارمة (Copyleft / AGPL / GPL).
-3. **مصفوفة التوافق `compatibilityMatrix.ts`**: قواعد التوافق المتبادل بين الرخص.
+## 1. Scope of responsibility and folders
+- **Assigned folder**: `src/licenses/`
+- **User stories (ClickUp HUs)**:
+  - **HU-08**: License and SPDX ID detector (`LicenseDetector`) working from file headers and GitHub metadata.
+  - **HU-09**: Risk assessment engine (`RiskEngine`) and open-source license compatibility matrix.
 
 ---
 
-## 3. ملفات الكود المرجعي المنظمة في هذا المجلد
-- `licenses/licenseDetector.ts`: كشف الرخص القانونية من النصوص ومن استجابة الـ API.
-- `licenses/riskEngine.ts`: تقييم درجة الخطورة والسبب المنطقي للتعارض.
-- `licenses/compatibilityMatrix.ts`: مصفوفة التوافق بين مختلف الرخص (GPL, MIT, Apache, BSD, AGPL).
+## 2. How the code was separated from the prototype
+1. **The license inspection logic was extracted from `sourceSearch.ts`**:
+   - Detecting explicit embedded copyright notices (GPL-3.0, MIT, Apache-2.0).
+   - Extracting `spdx_id` from the GitHub repository data (`/repos/:owner/:repo`).
+2. **Risk assessment engine `riskEngine.ts`**:
+   - Matching the detected license against the project policy (`SAFE`, `WARNING`, `FORBIDDEN`, `UNKNOWN`).
+   - Classifying strict reciprocal licenses (Copyleft / AGPL / GPL).
+3. **Compatibility matrix `compatibilityMatrix.ts`**: Rules for mutual compatibility between licenses.
 
 ---
 
-## 4. خطة العمل وتطبيق الـ TDD (من يوم الإثنين)
-1. إنشاء فرع للمهمة انطلاقاً من `develop`:
+## 3. Reference code files organized in this folder
+- `licenses/licenseDetector.ts`: Detects legal licenses from text and from the API response.
+- `licenses/riskEngine.ts`: Assesses the severity level and the reasoning behind the conflict.
+- `licenses/compatibilityMatrix.ts`: Compatibility matrix across the different licenses (GPL, MIT, Apache, BSD, AGPL).
+
+---
+
+## 4. Work plan and applying TDD (from Monday)
+1. Create a task branch from `develop`:
    ```bash
    git checkout develop
    git pull origin develop
    git checkout -b feature/HU-08-T1
    ```
-2. كتابة اختبار الوحدة أولاً (Red Phase):
-   - اختبار التعرف على نصوص رخصة GPL-3.0 المضمنة.
-   - اختبار مصفوفة توافق MIT مع GPL ورفض التراخيص المحظورة كـ FORBIDDEN.
-3. نقل الكود المرجعي المنظم إلى `src/licenses/` (Green Phase).
-4. تشغيل الاختبارات:
+2. Write the unit test first (Red Phase):
+   - Test recognition of embedded GPL-3.0 license text.
+   - Test the MIT/GPL compatibility matrix and the rejection of prohibited licenses as FORBIDDEN.
+3. Move the organized reference code into `src/licenses/` (Green Phase).
+4. Run the tests:
    ```bash
    npm test
    ```
-5. فتح Pull Request إلى `develop` وتعيين المراجع من علامة `rev-` في ClickUp.
+5. Open a Pull Request to `develop` and assign the reviewer from the `rev-` tag in ClickUp.

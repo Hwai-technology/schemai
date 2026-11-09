@@ -1,42 +1,42 @@
-# دليل مهام يوسف — Yusuf (HU-02, HU-03, HU-13)
+# Task guide — Yusuf (HU-02, HU-03, HU-13)
 
-## 1. نطاق المسؤولية والمجلدات
-- **المجلدات المخصصة**: `src/auth/`, `src/security/`, `src/history/`
-- **قصص المستخدم (ClickUp HUs)**:
-  - **HU-02**: مصادقة GitHub عبر VS Code Authentication API ومؤشر شريط الحالة (`AuthManager`, `AuthStatusBarItem`).
-  - **HU-03**: التخزين الآمن للمفاتيح والرموز عبر `ExtensionContext.secrets` وترحيل الرموز النصية (`SecretStorageManager`).
-  - **HU-13**: سجل التدقيق المحلي للعمليات وتتبع اللصق (`HistoryManager`, `HistoryStorage`).
-
----
-
-## 2. حدود النطاق وتوجيهات Sprint 1
-- **تنبيه هام (تعليمات الفريق)**: لوحة الشريط الجانبي التفاعلية والسجل الكامل (HU-16) تبقى في النموذج المبدئي فقط وليست جزءاً من Sprint 1.
-- التركيز في `src/history/` ينصب على تخزين واسترجاع سجلات التحقق محلياً وتحديد الحالات الزائفة (False Positives) ووضع علامة المراجعة (Reviewed).
+## 1. Scope of responsibility and folders
+- **Assigned folders**: `src/auth/`, `src/security/`, `src/history/`
+- **User stories (ClickUp HUs)**:
+  - **HU-02**: GitHub authentication through the VS Code Authentication API and a status bar indicator (`AuthManager`, `AuthStatusBarItem`).
+  - **HU-03**: Secure storage of keys and tokens through `ExtensionContext.secrets` and migration of plain-text tokens (`SecretStorageManager`).
+  - **HU-13**: Local audit log of operations and paste tracking (`HistoryManager`, `HistoryStorage`).
 
 ---
 
-## 3. ملفات الكود المرجعي المنظمة في هذا المجلد
-- `auth/authManager.ts`: إدارة جلسات GitHub، تسجيل الدخول والخروج وتبديل الحسابات.
-- `auth/authStatusBar.ts`: عنصر شريط الحالة لعرض حالة الحساب والقائمة المنبثقة.
-- `security/secretStorage.ts`: التخزين المشفر للرموز في نظام التشغيل وترحيل الرموز القديمة.
-- `history/historyManager.ts`: تسجيل العمليات وعلامات المراجعة.
-- `history/historyStorage.ts`: تخزين دائري محدود بـ 150 عنصراً في `workspaceState`.
+## 2. Scope limits and Sprint 1 guidance
+- **Important notice (team instructions)**: The interactive sidebar panel and the full history (HU-16) stay in the prototype only and are not part of Sprint 1.
+- The focus in `src/history/` is on storing and retrieving verification records locally, identifying false positives (False Positives) and setting the review mark (Reviewed).
 
 ---
 
-## 4. خطة العمل وتطبيق الـ TDD (من يوم الإثنين)
-1. إنشاء فرع للمهمة انطلاقاً من `develop`:
+## 3. Reference code files organized in this folder
+- `auth/authManager.ts`: Manages GitHub sessions, signing in and out, and switching accounts.
+- `auth/authStatusBar.ts`: Status bar item showing the account status and the pop-up menu.
+- `security/secretStorage.ts`: Encrypted storage of tokens in the operating system and migration of old tokens.
+- `history/historyManager.ts`: Records operations and review marks.
+- `history/historyStorage.ts`: Circular storage limited to 150 items in `workspaceState`.
+
+---
+
+## 4. Work plan and applying TDD (from Monday)
+1. Create a task branch from `develop`:
    ```bash
    git checkout develop
    git pull origin develop
-   git checkout -b feature/HU-02-T1  # أو HU-03 أو HU-13
+   git checkout -b feature/HU-02-T1  # or HU-03 or HU-13
    ```
-2. كتابة اختبار الوحدة أولاً (Red Phase):
-   - اختبار حفظ واسترجاع الرمز السري من `SecretStorage`.
-   - اختبار إضافة سجلات التدقيق والتأكد من تحديد سقف السجلات بـ 150.
-3. نقل الكود المرجعي إلى المجلدات المستهدفة (Green Phase).
-4. تشغيل الاختبارات:
+2. Write the unit test first (Red Phase):
+   - Test saving and retrieving the secret token from `SecretStorage`.
+   - Test adding audit records and confirm the record cap of 150 is enforced.
+3. Move the reference code into the target folders (Green Phase).
+4. Run the tests:
    ```bash
    npm test
    ```
-5. فتح Pull Request إلى `develop` وتعيين المراجع من علامة `rev-` في ClickUp.
+5. Open a Pull Request to `develop` and assign the reviewer from the `rev-` tag in ClickUp.
