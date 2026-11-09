@@ -27,6 +27,6 @@
   - Tokens supplied by `src/security/` / `src/auth/`.
 
 ## 5. Development & Ownership Rules
-- Changes to this directory require Yunus's review and approval.
+- Any team member may change this directory through a pull request. Yunus, as owner, is kept informed; the PR is approved by the reviewer assigned in ClickUp (`rev-*` tag), never by its author.
 - Unit tests must simulate HTTP 403, 429, and network disconnect states using mock interceptors.
 

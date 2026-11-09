@@ -27,6 +27,6 @@
   - VS Code workspace configuration API (`vscode.workspace.getConfiguration`).
 
 ## 5. Development & Ownership Rules
-- Changes to this directory require Leon's review and approval.
+- Any team member may change this directory through a pull request. Leon, as owner, is kept informed; the PR is approved by the reviewer assigned in ClickUp (`rev-*` tag), never by its author.
 - Ensure fallback defaults apply gracefully when no root LICENSE file exists.
 

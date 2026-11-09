@@ -31,6 +31,6 @@
   - `src/security/` / `src/auth/` for authenticated API headers.
 
 ## 5. Development & Ownership Rules
-- Changes to this directory require Alexander's review and approval.
+- Any team member may change this directory through a pull request. Alexander, as owner, is kept informed; the PR is approved by the reviewer assigned in ClickUp (`rev-*` tag), never by its author.
 - Unit tests must mock GitHub API responses to prevent external network calls during automated testing.
 

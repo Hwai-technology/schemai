@@ -121,18 +121,18 @@ This document establishes the official ownership, scope boundaries, interface co
 ## 4. Development & Pull Request Governance
 
 - **Feature Branch Naming**:
-  Branches must be branched off `ddevelop` using:
+  Branches must be branched off `develop` using:
   ```bash
   feature/HU-xx-Tn
   ```
 - **TDD Requirement**:
   The first commit in any feature branch must be the unit/integration test demonstrating the red phase. Subsequent commits provide the minimal implementation to achieve green.
 - **No Direct Pushes**:
-  Direct pushes to `ddevelop` are blocked.
+  Direct pushes to `develop` are blocked.
 - **Code Review**:
   Every PR requires:
   - 1 formal approval from the designated reviewer specified by the `rev-` tag in ClickUp.
-  - Approval from the module owner if files inside an assigned directory are modified.
+  - The module owner is informed (mentioned in the PR) when files inside their directory are modified; the approval still comes from the designated reviewer.
   - Passing CI checks (compilation, linting, tests).
 - **Prototyping Staging**:
   The prototype code is for reference only. Implementation code must be written or ported intentionally to meet Sprint 1 specifications. Local staging and experiments should be conducted in individual `.team-work/<Name>/` workspaces, which are excluded from Git tracking.

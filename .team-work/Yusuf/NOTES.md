@@ -25,10 +25,10 @@
 ---
 
 ## 4. خطة العمل وتطبيق الـ TDD (من يوم الإثنين)
-1. إنشاء فرع للمهمة انطلاقاً من `ddevelop`:
+1. إنشاء فرع للمهمة انطلاقاً من `develop`:
    ```bash
-   git checkout ddevelop
-   git pull origin ddevelop
+   git checkout develop
+   git pull origin develop
    git checkout -b feature/HU-02-T1  # أو HU-03 أو HU-13
    ```
 2. كتابة اختبار الوحدة أولاً (Red Phase):
@@ -39,4 +39,4 @@
    ```bash
    npm test
    ```
-5. فتح Pull Request إلى `ddevelop` وتعيين المراجع من علامة `rev-` في ClickUp.
+5. فتح Pull Request إلى `develop` وتعيين المراجع من علامة `rev-` في ClickUp.
