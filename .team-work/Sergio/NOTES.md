@@ -1,24 +1,32 @@
-# Developer Workspace: Sergio
+# دليل مهام سيرجيو — Sergio (HU-14, HU-15)
 
-## Assigned Scope
-- **Assigned Features**: `llm/`, `quickfix/`
-- **Assigned HUs**: HU-14, HU-15
+## 1. نطاق المسؤولية والمجلدات
+- **المجلدات المخصصة**: `src/llm/` و `src/quickfix/`
+- **قصص المستخدم (ClickUp HUs)**:
+  - **HU-14**: تكامل نماذج الذكاء الاصطناعي (LLM) وشرح المخاطر القانونية بلغة مفهومة.
+  - **HU-15**: توفير الإصلاحات السريعة في المحرر (`vscode.CodeActionProvider`).
 
-## Purpose of this Workspace
-This `.team-work/Sergio/` directory is your private, local-only workspace. It is git-ignored and will not be pushed to GitHub. Use it to draft prompt templates, LLM client reasoning, and CodeActionProvider remediation edits.
+---
 
-## How to Prepare Code for Integration
-1. Prototype code or ideas can be staged and tested here locally.
-2. When starting a ClickUp HU, branch off `ddevelop`:
+## 2. ملفات الكود المرجعي المنظمة في هذا المجلد
+- `llm/llmExplainer.ts`: صياغة قوالب التوجيه (Prompts) واستدعاء مزودي الذكاء الاصطناعي لتفسير تعارض التراخيص وتقديم حلول بديلة للمطور.
+- `quickfix/codeActionProvider.ts`: تسجيل الإجراءات السريعة (Code Actions) لإضافة ترويسة العزو القانوني (Attribution) أو استبدال الشيفرة المنسوخة تلقائياً.
+
+---
+
+## 3. خطة العمل وتطبيق الـ TDD (من يوم الإثنين)
+1. إنشاء فرع للمهمة انطلاقاً من `ddevelop`:
    ```bash
-   git checkout -b feature/HU-14-Tn  # or feature/HU-15-Tn
+   git checkout ddevelop
+   git pull origin ddevelop
+   git checkout -b feature/HU-14-T1  # أو HU-15-T1
    ```
-3. Commit your unit test first (Red phase of TDD) validating prompt generation or code action registration.
-4. Port or implement the minimal code into `src/llm/` or `src/quickfix/` (Green phase).
-5. Ensure tests pass cleanly:
+2. كتابة اختبار الوحدة أولاً (Red Phase):
+   - اختبار تكوين رسالة الـ Prompt بناءً على بيانات الرخصة المكتشفة.
+   - اختبار تسجيل CodeActions في قائمة VS Code عند وجود Diagnostic نشط.
+3. نقل الكود المرجعي إلى `src/llm/` و `src/quickfix/` (Green Phase).
+4. تشغيل الاختبارات:
    ```bash
    npm test
    ```
-6. Open a Pull Request targeting `ddevelop`.
-7. Obtain review approval from the designated reviewer (`rev-` tag in ClickUp).
-
+5. فتح Pull Request إلى `ddevelop` وتعيين المراجع من علامة `rev-` في ClickUp.

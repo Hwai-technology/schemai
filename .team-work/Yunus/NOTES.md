@@ -1,24 +1,46 @@
-# Developer Workspace: Yunus
+# دليل مهام يونس — Yunus (HU-10, QA, CI)
 
-## Assigned Scope
-- **Assigned Features**: `network/`, `test/`
-- **Assigned HUs**: HU-10, QA, CI
+## 1. نطاق المسؤولية والمجلدات
+- **المجلدات المخصصة**: `src/network/` و `src/test/`
+- **قصص المستخدم (ClickUp HUs)**:
+  - **HU-10**: مرونة الشبكة، وحدود الاستخدام (403 و 429)، وإعادة المحاولة التلقائية (Exponential Backoff).
+  - **QA & CI**: بنية الاختبارات المشتركة، اختبارات الوحدة، وإعدادات التحقق الآلي في GitHub Actions.
 
-## Purpose of this Workspace
-This `.team-work/Yunus/` directory is your private, local-only workspace. It is git-ignored and will not be pushed to GitHub. Use it to draft resilient HTTP interceptors, rate-limiting backoff algorithms, mock test suites, and CI workflows.
+---
 
-## How to Prepare Code for Integration
-1. Prototype code or ideas can be staged and tested here locally.
-2. When starting a ClickUp HU, branch off `ddevelop`:
+## 2. كيفية فصل الكود من النموذج المبدئي (`sourceSearch.ts`)
+تم استخراج منطق الشبكة من `sourceSearch.ts`:
+1. **التعامل مع Rate Limit (403 / 429)**:
+   - استخلاص كود التحقق من `status === 403 || status === 429`.
+   - تنبيه المستخدم عند استنفاد الرصيد المجهول وتشجيعه على تسجيل الدخول بحسابه الشخصي.
+2. **عميل HTTP المخصص (`HttpClient`)**:
+   - إرسال طلبات الـ GET مع Timeout وإدارة الأخطاء.
+   - دعم التراجع الأسي (Exponential Backoff) عند الفشل المؤقت.
+3. **أطر الاختبار والـ CI**:
+   - توفير بيئة Mock للاختبارات السريعة دون اتصال فعلي بالإنترنت.
+
+---
+
+## 3. ملفات الكود المرجعي المنظمة في هذا المجلد
+- `network/httpClient.ts`: عميل HTTP مرن مع دعم المهلة والتحويل التلقائي لبيانات JSON والنصوص.
+- `network/rateLimitHandler.ts`: مراقبة أكواد الاستجابة 403 و 429 والتعامل مع فترات التهدئة (Cooldown).
+- `test/testHarness.ts`: بنية موحدة ومساعدات لتشغيل اختبارات Mocha ومحاكاة بيئة VS Code.
+
+---
+
+## 4. خطة العمل وتطبيق الـ TDD (من يوم الإثنين)
+1. إنشاء فرع للمهمة انطلاقاً من `ddevelop`:
    ```bash
-   git checkout -b feature/HU-10-Tn  # or feature/CI-Tn
+   git checkout ddevelop
+   git pull origin ddevelop
+   git checkout -b feature/HU-10-T1  # أو feature/CI-T1
    ```
-3. Commit your unit test first (Red phase of TDD) simulating 403, 429, and offline retry scenarios.
-4. Port or implement the minimal code into `src/network/` or `src/test/` (Green phase).
-5. Ensure tests pass cleanly:
+2. كتابة اختبار الوحدة أولاً (Red Phase):
+   - اختبار اعتراض الخطأ 429 وإطلاق التحذير المناسب.
+   - اختبار معالجة انتهاء المهلة (Timeout) وإرجاع null دون انهيار الإضافة.
+3. نقل الكود المرجعي إلى `src/network/` و `src/test/` (Green Phase).
+4. تشغيل الاختبارات:
    ```bash
    npm test
    ```
-6. Open a Pull Request targeting `ddevelop`.
-7. Obtain review approval from the designated reviewer (`rev-` tag in ClickUp).
-
+5. فتح Pull Request إلى `ddevelop` وتعيين المراجع من علامة `rev-` في ClickUp.

@@ -1,24 +1,35 @@
-# Developer Workspace: Ahmet
+# دليل مهام أحمد — Ahmet (COORD, HU-05, HU-06)
 
-## Assigned Scope
-- **Assigned Features**: `core/`, `analysis/`
-- **Assigned HUs**: COORD, HU-05, HU-06
+## 1. نطاق المسؤولية والمجلدات
+- **المجلدات المخصصة**: `src/core/` و `src/analysis/`
+- **قصص المستخدم (ClickUp HUs)**:
+  - **COORD**: تنسيق دورة حياة الإضافة، هيكل `extension.ts` المشترك، تعريف الواجهات المشتركة `types.ts`.
+  - **HU-05**: مراقبة اللصق غير المتزامن (`PasteMonitor`) وطابور التحليل غير المحظور (`AnalysisQueue`).
+  - **HU-06**: الأوامر اليدوية (`schemaAI.analyzeSelection`, `schemaAI.checkLastPasted`).
 
-## Purpose of this Workspace
-This `.team-work/Ahmet/` directory is your private, local-only staging and scratch area. It is explicitly ignored by Git (`.gitignore`) and will never be pushed to GitHub. Use it to experiment, prepare snippets, or draft implementation details before moving them to official feature branches.
+---
 
-## How to Prepare Code for Integration
-1. Prototype code or ideas can be drafted and tested here locally.
-2. When ready to implement a ClickUp HU, create a feature branch off `ddevelop`:
+## 2. ملفات الكود المرجعي المنظمة في هذا المجلد
+- `analysis/codeAnalyzer.ts`: فحص الكود، توليد البصمات (Fingerprinting)، تجريد التعليقات والفراغات، وحساب تشابه الرموز.
+- `analysis/pasteMonitor.ts`: الاستماع لأحداث لصق النصوص وتحديد الأجزاء المشبوهة.
+- `analysis/analysisQueue.ts`: طابور معالجة غير متزامن مع تفريغ وإلغاء الطلبات المتكررة (Debounce & Cancellation).
+- `core/coordinator.ts`: نموذج تسجيل الأوامر والربط مع الإضافة.
+
+---
+
+## 3. خطة العمل وتطبيق الـ TDD (من يوم الإثنين)
+1. إنشاء فرع للمهمة انطلاقاً من `ddevelop`:
    ```bash
-   git checkout -b feature/HU-xx-Tn
+   git checkout ddevelop
+   git pull origin ddevelop
+   git checkout -b feature/HU-05-T1
    ```
-3. Commit your unit test first (Red phase of TDD).
-4. Port or implement only the necessary code into `src/core/` or `src/analysis/` (Green phase).
-5. Ensure tests pass cleanly:
+2. كتابة اختبار الوحدة أولاً (Red Phase):
+   - اختبار كشف أحداث اللصق وتوليد البصمة.
+   - التحقق من عدم حظر واجهة المستخدم.
+3. نقل وتنقيح الكود المرجعي من هذا المجلد إلى `src/analysis/` أو `src/core/` (Green Phase).
+4. تشغيل الاختبارات والتأكد من نجاحها بالكامل:
    ```bash
    npm test
    ```
-6. Open a Pull Request targeting `ddevelop`.
-7. Obtain review approval from the designated reviewer (`rev-` tag in ClickUp).
-
+5. رفع الفرع وفتح Pull Request إلى `ddevelop`، وتعيين المراجع من علامة `rev-` في ClickUp.

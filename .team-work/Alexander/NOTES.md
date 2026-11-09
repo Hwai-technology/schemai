@@ -1,24 +1,43 @@
-# Developer Workspace: Alexander
+# دليل مهام ألكسندر — Alexander (HU-07)
 
-## Assigned Scope
-- **Assigned Features**: `search/`
-- **Assigned HUs**: HU-07
+## 1. نطاق المسؤولية والمجلدات
+- **المجلد المخصص**: `src/search/`
+- **قصص المستخدم (ClickUp HUs)**:
+  - **HU-07**: عميل البحث في GitHub Code Search API وحساب تشابه الأكواد.
 
-## Purpose of this Workspace
-This `.team-work/Alexander/` directory is your private, local-only workspace. It is git-ignored and will not be pushed to GitHub. Use it to draft GitHub Search API queries, test similarity heuristics, and refine models locally.
+---
 
-## How to Prepare Code for Integration
-1. Prototype code or ideas can be staged and tested here locally.
-2. When starting a ClickUp HU, branch off `ddevelop`:
+## 2. كيفية فصل الكود من النموذج المبدئي (`sourceSearch.ts`)
+تم تفكيك `sourceSearch.ts` وفق التوجيهات إلى 3 أجزاء مستقلة:
+1. **جزء ألكسندر (`src/search/`)**:
+   - بناء استعلام GitHub Code Search وتجهيز الرموز البرمجية (Identifiers).
+   - استبعاد مستودع المشروع الحالي (Self-Project Exclusion).
+   - تنزيل الملف المرشح للتحقق ومقارنة التطابق (Content Verification & Token Similarity >= 70%).
+2. **جزء ديفيد (`src/licenses/`)**: استخراج وتحديد معرفات الرخص `spdx_id` وفحص نصوص رخص GPL/MIT/Apache.
+3. **جزء يونس (`src/network/`)**: معالجة الأخطاء وحدود الاستخدام 403 / 429 وعمليات إعادة المحاولة (Retries).
+
+---
+
+## 3. ملفات الكود المرجعي المنظمة في هذا المجلد
+- `search/githubSearchClient.ts`: عميل البحث عن الأكواد في GitHub مع استبعاد المشروع الحالي وفحص المحتوى الأصلي.
+- `search/similarityCalculator.ts`: خوارزميات حساب معامل التشابه وتصفية الكلمات الشائعة.
+
+---
+
+## 4. خطة العمل وتطبيق الـ TDD (من يوم الإثنين)
+1. إنشاء فرع للمهمة انطلاقاً من `ddevelop`:
    ```bash
-   git checkout -b feature/HU-07-Tn
+   git checkout ddevelop
+   git pull origin ddevelop
+   git checkout -b feature/HU-07-T1
    ```
-3. Commit your unit test first (Red phase of TDD) with mocked network responses.
-4. Port or implement the minimal code into `src/search/` (Green phase).
-5. Ensure tests pass cleanly:
+2. كتابة اختبار الوحدة أولاً (Red Phase):
+   - اختبار تحويل الشيفرة إلى استعلام بحث بروتوكولي.
+   - اختبار احتساب التشابه بنسبة أعلى من 70% وتجاهل الاستعلامات ذات المعرفات القليلة (< 4).
+   - **تنبيه**: استخدام استجابات محاكاة (Mocks) لمنع الاتصال بالإنترنت أثناء الاختبار.
+3. نقل الكود المرجعي المنظم إلى `src/search/` (Green Phase).
+4. تشغيل الاختبارات:
    ```bash
    npm test
    ```
-6. Open a Pull Request targeting `ddevelop`.
-7. Obtain review approval from the designated reviewer (`rev-` tag in ClickUp).
-
+5. فتح Pull Request إلى `ddevelop` وتعيين المراجع من علامة `rev-` في ClickUp.
