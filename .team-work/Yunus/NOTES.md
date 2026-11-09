@@ -1,46 +1,46 @@
-# دليل مهام يونس — Yunus (HU-10, QA, CI)
+# Task guide — Yunus (HU-10, QA, CI)
 
-## 1. نطاق المسؤولية والمجلدات
-- **المجلدات المخصصة**: `src/network/` و `src/test/`
-- **قصص المستخدم (ClickUp HUs)**:
-  - **HU-10**: مرونة الشبكة، وحدود الاستخدام (403 و 429)، وإعادة المحاولة التلقائية (Exponential Backoff).
-  - **QA & CI**: بنية الاختبارات المشتركة، اختبارات الوحدة، وإعدادات التحقق الآلي في GitHub Actions.
-
----
-
-## 2. كيفية فصل الكود من النموذج المبدئي (`sourceSearch.ts`)
-تم استخراج منطق الشبكة من `sourceSearch.ts`:
-1. **التعامل مع Rate Limit (403 / 429)**:
-   - استخلاص كود التحقق من `status === 403 || status === 429`.
-   - تنبيه المستخدم عند استنفاد الرصيد المجهول وتشجيعه على تسجيل الدخول بحسابه الشخصي.
-2. **عميل HTTP المخصص (`HttpClient`)**:
-   - إرسال طلبات الـ GET مع Timeout وإدارة الأخطاء.
-   - دعم التراجع الأسي (Exponential Backoff) عند الفشل المؤقت.
-3. **أطر الاختبار والـ CI**:
-   - توفير بيئة Mock للاختبارات السريعة دون اتصال فعلي بالإنترنت.
+## 1. Scope of responsibility and folders
+- **Assigned folders**: `src/network/` and `src/test/`
+- **User stories (ClickUp HUs)**:
+  - **HU-10**: Network resilience, usage limits (403 and 429), and automatic retry (Exponential Backoff).
+  - **QA & CI**: Shared test structure, unit tests, and automated verification settings in GitHub Actions.
 
 ---
 
-## 3. ملفات الكود المرجعي المنظمة في هذا المجلد
-- `network/httpClient.ts`: عميل HTTP مرن مع دعم المهلة والتحويل التلقائي لبيانات JSON والنصوص.
-- `network/rateLimitHandler.ts`: مراقبة أكواد الاستجابة 403 و 429 والتعامل مع فترات التهدئة (Cooldown).
-- `test/testHarness.ts`: بنية موحدة ومساعدات لتشغيل اختبارات Mocha ومحاكاة بيئة VS Code.
+## 2. How the code was separated from the prototype (`sourceSearch.ts`)
+The network logic was extracted from `sourceSearch.ts`:
+1. **Handling the Rate Limit (403 / 429)**:
+   - Extracting the check for `status === 403 || status === 429`.
+   - Alerting the user when the anonymous quota is exhausted and encouraging them to sign in with their personal account.
+2. **Custom HTTP client (`HttpClient`)**:
+   - Sending GET requests with a Timeout and error handling.
+   - Supporting Exponential Backoff on temporary failures.
+3. **Test frameworks and CI**:
+   - Providing a Mock environment for fast tests with no real internet connection.
 
 ---
 
-## 4. خطة العمل وتطبيق الـ TDD (من يوم الإثنين)
-1. إنشاء فرع للمهمة انطلاقاً من `develop`:
+## 3. Reference code files organized in this folder
+- `network/httpClient.ts`: Flexible HTTP client with timeout support and automatic conversion of JSON and text data.
+- `network/rateLimitHandler.ts`: Monitors the 403 and 429 response codes and handles cooldown periods (Cooldown).
+- `test/testHarness.ts`: Shared structure and helpers for running Mocha tests and simulating the VS Code environment.
+
+---
+
+## 4. Work plan and applying TDD (from Monday)
+1. Create a task branch from `develop`:
    ```bash
    git checkout develop
    git pull origin develop
-   git checkout -b feature/HU-10-T1  # أو feature/CI-T1
+   git checkout -b feature/HU-10-T1  # or feature/CI-T1
    ```
-2. كتابة اختبار الوحدة أولاً (Red Phase):
-   - اختبار اعتراض الخطأ 429 وإطلاق التحذير المناسب.
-   - اختبار معالجة انتهاء المهلة (Timeout) وإرجاع null دون انهيار الإضافة.
-3. نقل الكود المرجعي إلى `src/network/` و `src/test/` (Green Phase).
-4. تشغيل الاختبارات:
+2. Write the unit test first (Red Phase):
+   - Test intercepting the 429 error and raising the appropriate warning.
+   - Test handling a Timeout and returning null without crashing the extension.
+3. Move the reference code into `src/network/` and `src/test/` (Green Phase).
+4. Run the tests:
    ```bash
    npm test
    ```
-5. فتح Pull Request إلى `develop` وتعيين المراجع من علامة `rev-` في ClickUp.
+5. Open a Pull Request to `develop` and assign the reviewer from the `rev-` tag in ClickUp.
