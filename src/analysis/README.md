@@ -28,3 +28,4 @@
 ## 5. Development & Ownership Rules
 - Changes to this directory require Ahmet's review and approval.
 - Tests must verify document event handling without blocking editor responsiveness.
+

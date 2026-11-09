@@ -35,3 +35,4 @@ export interface IOperationResult<T> {
     readonly data?: T;
     readonly error?: Error;
 }
+

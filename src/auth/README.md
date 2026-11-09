@@ -26,3 +26,4 @@
 ## 5. Development & Ownership Rules
 - Changes to this directory require Yusuf's review and approval.
 - Ensure the extension behaves gracefully in unauthenticated / guest modes.
+

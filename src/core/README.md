@@ -24,3 +24,4 @@
 ## 5. Development & Ownership Rules
 - Changes to this directory require Ahmet's review and approval.
 - All additions must follow test-driven development (TDD).
+

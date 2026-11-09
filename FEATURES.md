@@ -136,3 +136,4 @@ This document establishes the official ownership, scope boundaries, interface co
   - Passing CI checks (compilation, linting, tests).
 - **Prototyping Staging**:
   The prototype code is for reference only. Implementation code must be written or ported intentionally to meet Sprint 1 specifications. Local staging and experiments should be conducted in individual `.team-work/<Name>/` workspaces, which are excluded from Git tracking.
+

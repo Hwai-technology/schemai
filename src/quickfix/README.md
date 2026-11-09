@@ -29,3 +29,4 @@
 ## 5. Development & Ownership Rules
 - Changes to this directory require Sergio's review and approval.
 - Code action workspace edits must be atomic and reversible via standard undo.
+

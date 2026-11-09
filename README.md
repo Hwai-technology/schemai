@@ -93,3 +93,4 @@ Every task delivered in Sprint 1 must adhere to the following workflow:
   - Pull request linked to corresponding ClickUp HU.
   - At least 1 review approval from the designated reviewer (`rev-` tag in ClickUp).
   - Green CI pipeline (clean build, linting, and 100% passing tests).
+

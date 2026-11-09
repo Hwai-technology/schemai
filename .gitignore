@@ -1,6 +1,3 @@
-# Team local private workspaces (not tracked)
-.team-work/
-
 # Node dependencies
 node_modules/
 
@@ -25,3 +22,4 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
