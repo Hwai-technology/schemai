@@ -1,0 +1,33 @@
+{
+  "name": "schema-ai",
+  "displayName": "SchemAI - External Code & License Risk Analyzer",
+  "description": "Smart extension to detect external code, search sources (GitHub), evaluate license compatibility, and assess risks on paste.",
+  "version": "0.1.0",
+  "publisher": "schemai-team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hwai-technology/schemai"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "test": "npm run compile && mocha out/test/**/*.test.js"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^16.18.126",
+    "@types/vscode": "^1.75.0",
+    "mocha": "^10.8.2",
+    "typescript": "^4.9.5"
+  }
+}
