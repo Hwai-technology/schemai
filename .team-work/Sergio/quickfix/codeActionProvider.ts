@@ -47,3 +47,4 @@ export class SchemAIQuickFixProvider implements vscode.CodeActionProvider {
     return actions;
   }
 }
+

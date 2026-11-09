@@ -113,3 +113,4 @@ export class HistoryManager {
     this.onHistoryChangedEmitter.dispose();
   }
 }
+

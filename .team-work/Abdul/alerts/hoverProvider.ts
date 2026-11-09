@@ -54,3 +54,4 @@ export class SchemAIHoverProvider implements vscode.HoverProvider {
     return new vscode.Hover(md);
   }
 }
+

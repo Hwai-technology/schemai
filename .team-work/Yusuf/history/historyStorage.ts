@@ -47,3 +47,4 @@ export class HistoryStorage {
     await this.workspaceState.update(HistoryStorage.STORAGE_KEY, []);
   }
 }
+

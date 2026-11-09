@@ -102,3 +102,4 @@ export class AnalysisQueue {
     this.onAnalysisCompleteEmitter.dispose();
   }
 }
+

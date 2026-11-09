@@ -42,3 +42,4 @@ export class GitHubSearchClient {
     return `https://raw.githubusercontent.com/${repoFullName}/HEAD/${path}`;
   }
 }
+

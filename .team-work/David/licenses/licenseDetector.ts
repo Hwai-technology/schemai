@@ -75,3 +75,4 @@ export class LicenseDetector {
     return { licenseName: 'UNKNOWN', spdxId: 'UNKNOWN' };
   }
 }
+

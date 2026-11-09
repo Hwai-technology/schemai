@@ -19,3 +19,4 @@ export class SimilarityCalculator {
     return unionCount > 0 ? (intersectionCount / unionCount) : 0;
   }
 }
+

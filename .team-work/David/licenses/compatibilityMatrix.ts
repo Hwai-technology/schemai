@@ -19,3 +19,4 @@ export class CompatibilityMatrix {
     return this.COPYLEFT_WEAK.has(spdxId.toUpperCase());
   }
 }
+

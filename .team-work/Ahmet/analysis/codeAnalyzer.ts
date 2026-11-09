@@ -79,3 +79,4 @@ export class CodeAnalyzer {
     return unionCount > 0 ? (intersectionCount / unionCount) : 0;
   }
 }
+

@@ -51,3 +51,4 @@ export class AuthStatusBarItem {
     this.statusBarItem.dispose();
   }
 }
+

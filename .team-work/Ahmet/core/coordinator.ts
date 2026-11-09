@@ -35,3 +35,4 @@ export function registerCommands(context: vscode.ExtensionContext, analysisQueue
     })
   );
 }
+

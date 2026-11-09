@@ -68,3 +68,4 @@ export class EditorDecorator {
     this.codeBoxDecorationType.dispose();
   }
 }
+
