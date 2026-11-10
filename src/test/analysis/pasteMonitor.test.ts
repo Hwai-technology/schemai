@@ -93,3 +93,4 @@ describe('PasteMonitor (HU-05 T1)', () => {
     assert.strictEqual(detectedPastes.length, 0);
   });
 });
+
