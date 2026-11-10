@@ -21,7 +21,8 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
-    "test": "npm run compile && mocha out/test/**/*.test.js"
+    "clean": "node -e \"require('fs').rmSync('out',{recursive:true,force:true})\"",
+    "test": "npm run clean && npm run compile && mocha \"out/test/**/*.test.js\""
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
