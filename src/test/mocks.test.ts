@@ -1,9 +1,10 @@
+import 'mocha';
 import * as assert from 'assert';
 import { MockGitHubSearchService } from './mocks/githubSearch.mock';
 import { MockLLMService } from './mocks/llm.mock';
 
-suite('QA-T1: Mocks & Services Validation', () => {
-  test('GitHub Search Mock returns expected mock data', async () => {
+describe('QA-T1: Mocks & Services Validation', () => {
+  it('GitHub Search Mock returns expected mock data', async () => {
     const searchService = new MockGitHubSearchService();
     const result = await searchService.searchRepositories('schema');
     
@@ -12,7 +13,7 @@ suite('QA-T1: Mocks & Services Validation', () => {
     assert.strictEqual(result.items[0].name, 'schema-demo');
   });
 
-  test('LLM Mock returns valid completion structure', async () => {
+  it('LLM Mock returns valid completion structure', async () => {
     const llmService = new MockLLMService();
     const result = await llmService.generateCompletion('Analyze this repo');
     
