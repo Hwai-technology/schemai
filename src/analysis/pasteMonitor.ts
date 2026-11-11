@@ -36,6 +36,7 @@ export class PasteMonitor {
     workspace?: WorkspaceEventSource
   ): void {
     const ws: WorkspaceEventSource =
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       workspace ?? (require('vscode') as typeof vscode).workspace;
     const disposable = ws.onDidChangeTextDocument((event) => {
       void this.handleTextDocumentChange(event);
