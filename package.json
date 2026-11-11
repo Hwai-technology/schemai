@@ -27,6 +27,38 @@
           "description": "SPDX identifier of the project license used to evaluate external code compatibility."
         }
       }
+    },
+    "commands": [
+      {
+        "command": "schemaAI.analyzeSelection",
+        "title": "Analyze Selection",
+        "category": "SchemAI"
+      },
+      {
+        "command": "schemaAI.analyzeFile",
+        "title": "Analyze File",
+        "category": "SchemAI"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "schemaAI.analyzeSelection",
+          "when": "editorHasSelection",
+          "group": "schemaAI@1"
+        },
+        {
+          "command": "schemaAI.analyzeFile",
+          "when": "editorTextFocus",
+          "group": "schemaAI@2"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "schemaAI.analyzeFile",
+          "group": "schemaAI@1"
+        }
+      ]
     }
   },
   "scripts": {
