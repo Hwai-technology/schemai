@@ -10,7 +10,7 @@ import * as vscode from 'vscode';
  * Feature modules will be registered here as their respective PRs
  * are approved and integrated into the development branch.
  */
-export function activate(context: vscode.ExtensionContext): void {
+export function activate(_context: vscode.ExtensionContext): void {
     // Feature registration will be integrated here.
 }
 

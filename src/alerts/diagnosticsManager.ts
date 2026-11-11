@@ -53,6 +53,8 @@ export class DiagnosticsManager {
   }
 
   public static create(): DiagnosticsManager {
+    // Loaded lazily because the real `vscode` module is only available inside the extension host.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const vs = require('vscode') as typeof vscode;
     return new DiagnosticsManager(
       vs.languages.createDiagnosticCollection('schemai'),
