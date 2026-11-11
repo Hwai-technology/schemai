@@ -19,8 +19,7 @@ describe("LLMClient (HU-14 T1)", () => {
       },
     };
     const tokenStore = {
-      get: async (key: string): Promise<string | undefined> =>
-        key === "schemaAI.llmToken" ? "secret-token" : undefined,
+      getLlmApiKey: async (): Promise<string | undefined> => "secret-token",
     };
     const client = new LLMClient(httpClient, tokenStore);
 
@@ -45,13 +44,13 @@ describe("LLMClient (HU-14 T1)", () => {
   it("returns a fallback when the request times out instead of throwing", async () => {
     const httpClient = {
       post: async (): Promise<{ text: string }> => {
-        throw new Error("request timeout");
+        return new Promise(() => undefined);
       },
     };
     const tokenStore = {
-      get: async (): Promise<string> => "secret-token",
+      getLlmApiKey: async (): Promise<string> => "secret-token",
     };
-    const client = new LLMClient(httpClient, tokenStore);
+    const client = new LLMClient(httpClient, tokenStore, 1);
 
     await assert.doesNotReject(async () => {
       const result = await client.explain("snippet", {});
@@ -65,14 +64,19 @@ describe("LLMClient (HU-14 T1)", () => {
   it("does not log the token", async () => {
     const logs: string[] = [];
     const originalLog = console.log;
-    console.log = (...args: unknown[]) => logs.push(args.join(" "));
+    const originalWarn = console.warn;
+    const originalError = console.error;
+    const capture = (...args: unknown[]) => logs.push(args.join(" "));
+    console.log = capture;
+    console.warn = capture;
+    console.error = capture;
 
     try {
       const httpClient = {
         post: async (): Promise<{ text: string }> => ({ text: "explanation" }),
       };
       const tokenStore = {
-        get: async (): Promise<string> => "secret-token",
+        getLlmApiKey: async (): Promise<string> => "secret-token",
       };
       const client = new LLMClient(httpClient, tokenStore);
 
@@ -81,6 +85,8 @@ describe("LLMClient (HU-14 T1)", () => {
       assert.ok(!logs.some((message) => message.includes("secret-token")));
     } finally {
       console.log = originalLog;
+      console.warn = originalWarn;
+      console.error = originalError;
     }
   });
 });
