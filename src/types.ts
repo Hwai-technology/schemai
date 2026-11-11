@@ -36,3 +36,32 @@ export interface IOperationResult<T> {
     readonly error?: Error;
 }
 
+/**
+ * SPDX identifiers supported by the project license policy.
+ */
+export type SpdxLicenseId =
+    | 'MIT'
+    | 'Apache-2.0'
+    | 'BSD-2-Clause'
+    | 'BSD-3-Clause'
+    | 'ISC'
+    | 'GPL-2.0'
+    | 'GPL-3.0'
+    | 'AGPL-3.0'
+    | 'LGPL-3.0'
+    | 'MPL-2.0';
+
+/**
+ * Compatibility family of an SPDX license.
+ */
+export type SpdxLicenseCategory = 'permissive' | 'weak-copyleft' | 'strong-copyleft';
+
+/**
+ * Metadata for one supported SPDX license.
+ */
+export interface SpdxLicense {
+    readonly id: SpdxLicenseId;
+    readonly name: string;
+    readonly category: SpdxLicenseCategory;
+}
+
