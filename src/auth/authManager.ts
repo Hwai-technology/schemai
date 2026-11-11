@@ -25,15 +25,40 @@ export class AuthManager {
   private static readonly PROVIDER_ID = 'github';
   private static readonly SCOPES: readonly string[] = ['read:user'];
 
+  /** Set by `signOut()`: SchemAI ignores the VS Code session until the user signs in again. */
+  private signedOut = false;
+
   constructor(private readonly deps: AuthManagerDeps) {}
 
   /** Token of the existing GitHub session, or `undefined` if there is none. Never prompts. */
   public async getAccessToken(): Promise<string | undefined> {
+    if (this.signedOut) {
+      return undefined;
+    }
     const session = await this.deps.authentication.getSession(
       AuthManager.PROVIDER_ID,
       AuthManager.SCOPES,
       { createIfNone: false, silent: true }
     );
     return session?.accessToken;
+  }
+
+  /** Asks VS Code for a GitHub session, prompting the user to sign in if there is none. */
+  public async signIn(): Promise<boolean> {
+    const session = await this.deps.authentication.getSession(
+      AuthManager.PROVIDER_ID,
+      AuthManager.SCOPES,
+      { createIfNone: true }
+    );
+    this.signedOut = !session;
+    return !!session;
+  }
+
+  /**
+   * Clears the session for SchemAI. Extensions cannot remove VS Code's own GitHub
+   * session, so SchemAI stops using it until the next `signIn()`.
+   */
+  public signOut(): void {
+    this.signedOut = true;
   }
 }
