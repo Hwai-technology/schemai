@@ -91,3 +91,72 @@ describe('AuthManager (HU-02 T1)', () => {
     assert.deepStrictEqual(fake.settingsUpdates, []);
   });
 });
+
+/**
+ * Fake `vscode.window.showWarningMessage`: records each warning and answers with
+ * the button the test chooses (`undefined` = the user closed the warning).
+ */
+function createFakeWindow(answer: string | undefined) {
+  const warnings: { message: string; items: string[] }[] = [];
+  const window = {
+    showWarningMessage: async (message: string, ...items: string[]) => {
+      warnings.push({ message, items });
+      return answer;
+    }
+  };
+  return { window, warnings };
+}
+
+describe('AuthManager.withSession (HU-02 T4)', () => {
+  it('without a session, shows a warning with a "Sign in" button and does not search', async () => {
+    const fake = createFakeVscode(undefined);
+    const ui = createFakeWindow(undefined);
+    const manager = new AuthManager({ ...fake.api, window: ui.window });
+    let searches = 0;
+
+    const result = await manager.withSession(async () => {
+      searches++;
+      return 'search results';
+    });
+
+    assert.strictEqual(result, undefined);
+    assert.strictEqual(searches, 0);
+    assert.strictEqual(ui.warnings.length, 1);
+    assert.deepStrictEqual(ui.warnings[0].items, ['Sign in']);
+  });
+
+  it('clicking "Sign in" starts the GitHub sign-in, and a cancelled sign-in does not throw or search', async () => {
+    const fake = createFakeVscode(undefined); // getSession({ createIfNone: true }) rejects, like a cancelled sign-in
+    const ui = createFakeWindow('Sign in');
+    const manager = new AuthManager({ ...fake.api, window: ui.window });
+    let searches = 0;
+
+    await assert.doesNotReject(() =>
+      manager.withSession(async () => {
+        searches++;
+      })
+    );
+
+    assert.strictEqual(searches, 0);
+    assert.ok(
+      fake.getSessionCalls.some((call) => call.options?.createIfNone === true),
+      'Sign in should call getSession with createIfNone: true'
+    );
+  });
+
+  it('with a session, runs the search with the token and shows no warning', async () => {
+    const fake = createFakeVscode(FAKE_TOKEN);
+    const ui = createFakeWindow(undefined);
+    const manager = new AuthManager({ ...fake.api, window: ui.window });
+    const tokensUsed: string[] = [];
+
+    const result = await manager.withSession(async (token) => {
+      tokensUsed.push(token);
+      return 'search results';
+    });
+
+    assert.strictEqual(result, 'search results');
+    assert.deepStrictEqual(tokensUsed, [FAKE_TOKEN]);
+    assert.strictEqual(ui.warnings.length, 0);
+  });
+});
