@@ -28,6 +28,13 @@ export type AnalysisHandler = (
   metadata?: { languageId?: string; uri?: unknown }
 ) => unknown;
 
+/** The part of `vscode.workspace` used to open the file clicked in the explorer. */
+export interface DocumentOpener {
+  openTextDocument(
+    uri: any
+  ): Thenable<TextEditorLike['document']> | Promise<TextEditorLike['document']>;
+}
+
 /**
  * Registers manual code analysis commands for selection and entire files.
  * Pushes returned disposables into `context.subscriptions`.
@@ -35,7 +42,8 @@ export type AnalysisHandler = (
 export function registerAnalysisCommands(
   commands: CommandRegistry,
   window: WindowLike,
-  onAnalyze: AnalysisHandler
+  onAnalyze: AnalysisHandler,
+  workspace?: DocumentOpener
 ): vscode.Disposable[] {
   return [
     commands.registerCommand(ANALYZE_SELECTION_COMMAND, () => {
@@ -57,22 +65,26 @@ export function registerAnalysisCommands(
       });
     }),
 
-    commands.registerCommand(ANALYZE_FILE_COMMAND, () => {
-      const editor = window.activeTextEditor;
-      if (!editor) {
+    // The explorer context menu passes the clicked file's Uri; the palette passes nothing.
+    commands.registerCommand(ANALYZE_FILE_COMMAND, async (uri?: unknown) => {
+      const document =
+        uri && workspace
+          ? await workspace.openTextDocument(uri)
+          : window.activeTextEditor?.document;
+      if (!document) {
         window.showInformationMessage('SchemAI: Open a file to analyze.');
         return;
       }
 
-      const text = editor.document.getText();
+      const text = document.getText();
       if (!text || text.trim().length === 0) {
         window.showInformationMessage('SchemAI: File is empty.');
         return;
       }
 
       return onAnalyze(text, {
-        languageId: editor.document.languageId,
-        uri: editor.document.uri
+        languageId: document.languageId,
+        uri: document.uri
       });
     })
   ];

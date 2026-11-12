@@ -56,7 +56,14 @@
       "explorer/context": [
         {
           "command": "schemaAI.analyzeFile",
+          "when": "!explorerResourceIsFolder",
           "group": "schemaAI@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "schemaAI.analyzeSelection",
+          "when": "editorHasSelection"
         }
       ]
     }
