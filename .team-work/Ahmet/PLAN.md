@@ -91,7 +91,7 @@
 
 **Ready by the next meeting:**
 - [ ] HU-06·T2: PR open and task in EN REVISIÓN.
-- [ ] Reviews of today done (approved or changes requested).
+- [x] Reviews of today done (approved or changes requested).
 
 ### Day 5 — Fri 13/11
 *Planned: about 0,5 h.*
