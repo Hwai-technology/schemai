@@ -27,8 +27,15 @@ export class AuthManager {
 
   /** Set by `signOut()`: SchemAI ignores the VS Code session until the user signs in again. */
   private signedOut = false;
+  private readonly sessionListeners = new Set<() => void>();
 
   constructor(private readonly deps: AuthManagerDeps) {}
+
+  /** Called after SchemAI signs in or out. Returns a disposable that removes the listener. */
+  public onDidChangeSession(listener: () => void): { dispose(): void } {
+    this.sessionListeners.add(listener);
+    return { dispose: () => this.sessionListeners.delete(listener) };
+  }
 
   /** Token of the existing GitHub session, or `undefined` if there is none. Never prompts. */
   public async getAccessToken(): Promise<string | undefined> {
@@ -51,6 +58,7 @@ export class AuthManager {
       { createIfNone: true }
     );
     this.signedOut = !session;
+    this.fireSessionChanged();
     return !!session;
   }
 
@@ -60,5 +68,10 @@ export class AuthManager {
    */
   public signOut(): void {
     this.signedOut = true;
+    this.fireSessionChanged();
+  }
+
+  private fireSessionChanged(): void {
+    this.sessionListeners.forEach((listener) => listener());
   }
 }
