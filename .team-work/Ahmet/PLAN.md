@@ -79,19 +79,19 @@
 > ◆ H1 — Go / no-go decision on GitHub search (HU-07) is today.
 *Planned: about 2 h.*
 
-**[HU-06·T2 — Progress indicator with cancellation](https://app.clickup.com/t/1amfa05xxya)** (1,5 h)
+**[HU-06·T2 — Implementar el indicador de progreso con cancelación](https://app.clickup.com/t/1amfa05xxya)** (1,5 h)
 - Create the branch `feature/HU-06-T2` from `develop` (`git checkout develop && git pull && git checkout -b feature/HU-06-T2`).
 - **RED:** write the tests in `src/test/analysis/manualAnalysis.test.ts` for the cases in the task card below. Run `npm test`: they must **fail**, and for the right reason. Commit `test: HU-06 T2 Progress indicator with cancellation (red)` and push.
 - **GREEN:** implement in `src/analysis/manualAnalysis.ts` only what the tests need. Use (new: not in the prototype) as reference: copy the idea, not the whole file. Run `npm test` until it is green. Commit `feat: HU-06 T2 ...`.
 - **REFACTOR:** clean the code with the tests green, run `npm run lint`. Commit `refactor: ...` if you changed anything.
-- **PR:** open a pull request to `develop` titled `HU-06 T2: Progress indicator with cancellation`, paste the ClickUp link, move the task to **EN REVISIÓN** and tell **Leon** on WhatsApp (they have 24 h).
+- **PR:** open a pull request to `develop` titled `HU-06 T2: Implementar el indicador de progreso con cancelación`, paste the ClickUp link, move the task to **EN REVISIÓN** and tell **Leon** on WhatsApp (they have 24 h).
 
 **Reviews today**
 - HU-11·T1 (Abdul): check the first commit is `test:`, CI is green, the cases in the task card are covered and the DoD (P6 page 1a) is met. Approve or request changes in GitHub. (0,5 h)
 
 **Ready by the next meeting:**
 - [ ] HU-06·T2: PR open and task in EN REVISIÓN.
-- [ ] Reviews of today done (approved or changes requested).
+- [x] Reviews of today done (approved or changes requested).
 
 ### Day 5 — Fri 13/11
 *Planned: about 0,5 h.*
@@ -199,7 +199,7 @@
   - `Analyze file` sends the whole document text.
   - An empty selection shows an information message and does not analyse.
 
-### [HU-06·T2 — Progress indicator with cancellation](https://app.clickup.com/t/1amfa05xxya)
+### [HU-06·T2 — Implementar el indicador de progreso con cancelación](https://app.clickup.com/t/1amfa05xxya)
 - **Estimate:** 1,5 h · **Reviewer:** Leon · **Merged by:** Fri 13/11
 - **Reference code:** (new: not in the prototype)
 - **Goes in:** `src/analysis/manualAnalysis.ts`
