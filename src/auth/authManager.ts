@@ -1,6 +1,8 @@
 /** Minimal session shape the AuthManager reads from `vscode.AuthenticationSession`. */
 export interface AuthSession {
   readonly accessToken: string;
+  /** GitHub account; `label` is the user name shown in VS Code's Accounts menu. */
+  readonly account?: { readonly label: string };
 }
 
 /** The part of `vscode.authentication` the AuthManager needs, so tests can inject a fake. */
@@ -37,17 +39,21 @@ export class AuthManager {
     return { dispose: () => this.sessionListeners.delete(listener) };
   }
 
-  /** Token of the existing GitHub session, or `undefined` if there is none. Never prompts. */
-  public async getAccessToken(): Promise<string | undefined> {
+  /** The existing GitHub session SchemAI may use, or `undefined` if there is none. Never prompts. */
+  public async getCurrentSession(): Promise<AuthSession | undefined> {
     if (this.signedOut) {
       return undefined;
     }
-    const session = await this.deps.authentication.getSession(
+    return this.deps.authentication.getSession(
       AuthManager.PROVIDER_ID,
       AuthManager.SCOPES,
       { createIfNone: false, silent: true }
     );
-    return session?.accessToken;
+  }
+
+  /** Token of the existing GitHub session, or `undefined` if there is none. Never prompts. */
+  public async getAccessToken(): Promise<string | undefined> {
+    return (await this.getCurrentSession())?.accessToken;
   }
 
   /** Asks VS Code for a GitHub session, prompting the user to sign in if there is none. */
