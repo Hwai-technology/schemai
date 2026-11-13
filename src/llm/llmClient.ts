@@ -1,6 +1,6 @@
-const LLM_TOKEN_KEY = 'schemaAI.llmToken';
 const LLM_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
 const FALLBACK_EXPLANATION = 'Unable to generate an explanation at this time.';
+const DEFAULT_TIMEOUT_MS = 10_000;
 
 export interface LLMHttpRequest {
   url: string;
@@ -13,7 +13,7 @@ export interface LLMHttpClient {
 }
 
 export interface LLMTokenStore {
-  get(key: string): Promise<string | undefined>;
+  getLlmApiKey(): Promise<string | undefined>;
 }
 
 export interface LLMRiskData {
@@ -29,7 +29,8 @@ export interface LLMRiskData {
 export class LLMClient {
   public constructor(
     private readonly httpClient: LLMHttpClient,
-    private readonly tokenStore: LLMTokenStore
+    private readonly tokenStore: LLMTokenStore,
+    private readonly timeoutMs = DEFAULT_TIMEOUT_MS
   ) {}
 
   public async explain(
@@ -37,12 +38,12 @@ export class LLMClient {
     riskData: LLMRiskData
   ): Promise<string> {
     try {
-      const token = await this.tokenStore.get(LLM_TOKEN_KEY);
+      const token = await this.tokenStore.getLlmApiKey();
       if (!token) {
         return FALLBACK_EXPLANATION;
       }
 
-      const response = await this.httpClient.post({
+      const request = this.httpClient.post({
         url: LLM_ENDPOINT,
         headers: {
           Authorization: `Bearer ${token}`,
@@ -50,8 +51,22 @@ export class LLMClient {
         },
         body: JSON.stringify({ snippet, riskData }),
       });
+      let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+      const timeout = new Promise<never>((_, reject) => {
+        timeoutHandle = setTimeout(
+          () => reject(new Error('LLM request timed out')),
+          this.timeoutMs
+        );
+      });
+      try {
+        const response = await Promise.race([request, timeout]);
 
-      return response.text;
+        return response.text;
+      } finally {
+        if (timeoutHandle !== undefined) {
+          clearTimeout(timeoutHandle);
+        }
+      }
     } catch {
       return FALLBACK_EXPLANATION;
     }
