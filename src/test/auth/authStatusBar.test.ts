@@ -45,6 +45,7 @@ function createFakeItem() {
   return {
     text: '',
     tooltip: undefined as string | undefined,
+    command: undefined as string | undefined,
     shown: false,
     disposed: false,
     show() {
@@ -69,10 +70,10 @@ async function setup(initialToken: string | undefined) {
 }
 
 describe('AuthStatusBar (HU-02 T3)', () => {
-  it('shows "GitHub: connected" when there is a session, and is visible', async () => {
+  it('shows the GitHub account name when there is a session, and is visible', async () => {
     const { item } = await setup(FAKE_TOKEN);
 
-    assert.strictEqual(item.text, 'GitHub: connected');
+    assert.strictEqual(item.text, 'GitHub: fake-user');
     assert.strictEqual(item.shown, true);
   });
 
@@ -88,7 +89,7 @@ describe('AuthStatusBar (HU-02 T3)', () => {
     auth.changeSession(FAKE_TOKEN);
     await settle();
 
-    assert.strictEqual(item.text, 'GitHub: connected');
+    assert.strictEqual(item.text, 'GitHub: fake-user');
   });
 
   it('updates when the GitHub session is removed in VS Code', async () => {
@@ -109,7 +110,7 @@ describe('AuthStatusBar (HU-02 T3)', () => {
 
     await manager.signIn();
     await settle();
-    assert.strictEqual(item.text, 'GitHub: connected');
+    assert.strictEqual(item.text, 'GitHub: fake-user');
   });
 
   it('dispose() removes the item and stops listening to session changes', async () => {
@@ -119,5 +120,38 @@ describe('AuthStatusBar (HU-02 T3)', () => {
 
     assert.strictEqual(item.disposed, true);
     assert.strictEqual(auth.listeners.size, 0);
+  });
+
+  describe('click and tooltip (review on #26)', () => {
+    it('without a session, clicking the item runs schemaAI.login', async () => {
+      const { item } = await setup(undefined);
+
+      assert.strictEqual(item.command, 'schemaAI.login');
+    });
+
+    it('with a session, clicking the item runs schemaAI.disconnect', async () => {
+      const { item } = await setup(FAKE_TOKEN);
+
+      assert.strictEqual(item.command, 'schemaAI.disconnect');
+    });
+
+    it('the click action follows the session when it changes', async () => {
+      const { auth, item } = await setup(FAKE_TOKEN);
+
+      auth.changeSession(undefined);
+      await settle();
+
+      assert.strictEqual(item.command, 'schemaAI.login');
+    });
+
+    it('the tooltip tells the user to click, not to run a Command Palette entry', async () => {
+      const signedOut = await setup(undefined);
+      const signedIn = await setup(FAKE_TOKEN);
+
+      assert.match(signedOut.item.tooltip ?? '', /click to sign in/i);
+      assert.match(signedIn.item.tooltip ?? '', /fake-user/);
+      assert.match(signedIn.item.tooltip ?? '', /click to sign out/i);
+      assert.doesNotMatch(signedOut.item.tooltip ?? '', /run "/i);
+    });
   });
 });
