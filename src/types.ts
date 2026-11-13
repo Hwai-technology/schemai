@@ -65,3 +65,12 @@ export interface SpdxLicense {
     readonly category: SpdxLicenseCategory;
 }
 
+/**
+ * Represents a matched source file from GitHub Code Search.
+ */
+export interface SourceMatch {
+    readonly repository: string;
+    readonly url: string;
+    readonly filePath: string;
+    readonly similarity?: number;
+}
