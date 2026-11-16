@@ -31,7 +31,8 @@ export function buildHoverMarkdown(alert: AlertInput): string {
   const url = safeLinkUrl(alert.sourceUrl);
   const lines = [
     `**SchemAI: ${alert.severity} license risk**`,
-    `- License: \`${alert.license}\``,
+    // The license comes from GitHub too; a backtick would close the code span early.
+    `- License: \`${alert.license.replace(/`/g, "'")}\``,
     `- Source: ${url ? `[${repo}](${url})` : repo}`
   ];
   if (alert.similarity !== undefined) {
