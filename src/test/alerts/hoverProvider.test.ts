@@ -101,4 +101,14 @@ describe('AlertHoverProvider (HU-12 T1)', () => {
     assert.ok(markdown.includes('- Source: owner/repo'), markdown);
     assert.ok(!markdown.includes('](command:'), markdown);
   });
+
+  it('keeps an untrusted license inside its code span, so it cannot add a link', () => {
+    const markdown = buildHoverMarkdown(alert('high', { license: 'MIT`[x](command:evil)' }));
+    const licenseLine = markdown.split('\n').find((line) => line.startsWith('- License: '));
+
+    assert.ok(licenseLine, markdown);
+    // Only the two delimiters of the code span: Markdown never parses links inside a code span.
+    assert.strictEqual((licenseLine.match(/`/g) ?? []).length, 2, licenseLine);
+    assert.ok(licenseLine.startsWith('- License: `') && licenseLine.endsWith('`'), licenseLine);
+  });
 });
