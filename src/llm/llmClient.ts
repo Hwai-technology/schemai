@@ -1,3 +1,5 @@
+import { getFixedLicenseSummary } from './fixedSummaries';
+
 const LLM_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
 const FALLBACK_EXPLANATION = 'Unable to generate an explanation at this time.';
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -20,6 +22,13 @@ export interface LLMRiskData {
   [key: string]: unknown;
 }
 
+function getFallbackExplanation(riskData: LLMRiskData): string {
+  const detectedLicense = riskData.detectedLicense;
+  return typeof detectedLicense === 'string'
+    ? getFixedLicenseSummary(detectedLicense)
+    : FALLBACK_EXPLANATION;
+}
+
 /**
  * Sends license-risk data to the configured LLM provider.
  *
@@ -40,7 +49,7 @@ export class LLMClient {
     try {
       const token = await this.tokenStore.getLlmApiKey();
       if (!token) {
-        return FALLBACK_EXPLANATION;
+        return getFallbackExplanation(riskData);
       }
 
       const request = this.httpClient.post({
@@ -68,7 +77,7 @@ export class LLMClient {
         }
       }
     } catch {
-      return FALLBACK_EXPLANATION;
+      return getFallbackExplanation(riskData);
     }
   }
 }
