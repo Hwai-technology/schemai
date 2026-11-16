@@ -100,7 +100,7 @@
 - First measurement: HUs in COMPLETADOS / 15. Write the value and colour on P5 page 1 and say it in the meeting.
 
 **Ready by the next meeting:**
-- [ ] MET — % HU completadas: value written on the P5 page and said in the meeting.
+- [x] MET — % HU completadas: value written on the P5 page and said in the meeting.
 
 ### Day 6 — Mon 16/11
 *Planned: about 1 h.*

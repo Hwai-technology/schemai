@@ -140,3 +140,4 @@ export class AnalysisQueue {
     this.queue = [];
   }
 }
+
