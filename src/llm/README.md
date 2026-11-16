@@ -9,6 +9,7 @@
 - Integrate with LLM API backends to generate contextual explanations for detected license risks.
 - Formulate prompt templates translating complex legal license incompatibilities into plain-English advice.
 - Provide recommendations on compliance options (e.g., dual licensing, alternative libraries).
+- Provide fixed SPDX license summaries when the LLM is unconfigured or unavailable.
 
 ## 3. Scope Boundaries
 - **In Scope**: Prompt composition, LLM client calling, parsing and formatting explanations.
