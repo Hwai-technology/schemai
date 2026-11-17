@@ -2,7 +2,8 @@ import 'mocha';
 import * as assert from 'assert';
 import {
   AnalysisQueue,
-  QueuedAnalysisItem
+  QueuedAnalysisItem,
+  createPasteAnalysisHandler
 } from '../../analysis/analysisQueue';
 
 const createItem = (id: string, fingerprint: string, text = 'const x = 1;'): QueuedAnalysisItem => ({
@@ -146,5 +147,55 @@ describe('AnalysisQueue (HU-05 T2)', () => {
 
     await sleep(70);
     assert.strictEqual(called, false, 'worker must not be called after dispose');
+  });
+
+  it('notifies onAnalysisComplete listeners when an item is processed', async () => {
+    let eventReceived = false;
+    let receivedItem: QueuedAnalysisItem | undefined;
+    let receivedResult: unknown;
+
+    const queue = new AnalysisQueue({
+      debounceMs: 20,
+      worker: async () => ({ score: 0.95 })
+    });
+
+    const subscription = queue.onAnalysisComplete(({ item, result }) => {
+      eventReceived = true;
+      receivedItem = item;
+      receivedResult = result;
+    });
+
+    queue.enqueue(createItem('notify-1', 'fp-notify'));
+    await sleep(50);
+
+    assert.strictEqual(eventReceived, true);
+    assert.strictEqual(receivedItem?.id, 'notify-1');
+    assert.deepStrictEqual(receivedResult, { score: 0.95 });
+
+    subscription.dispose();
+    queue.dispose();
+  });
+
+  it('createPasteAnalysisHandler maps paste events and enqueues them', async () => {
+    let processedText = '';
+    const queue = new AnalysisQueue({
+      debounceMs: 20,
+      worker: async (item) => {
+        processedText = item.text;
+      }
+    });
+
+    const handler = createPasteAnalysisHandler(queue, (t) => `custom-fp:${t.length}`);
+    handler({
+      text: 'function add(a, b) { return a + b; }',
+      languageId: 'typescript',
+      documentUri: 'file:///test.ts',
+      range: {}
+    });
+
+    await sleep(50);
+    assert.strictEqual(processedText, 'function add(a, b) { return a + b; }');
+
+    queue.dispose();
   });
 });

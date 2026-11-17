@@ -17,6 +17,13 @@ export interface AnalysisQueueOptions {
   maxCacheSize?: number;
 }
 
+export interface AnalysisCompleteEvent {
+  item: QueuedAnalysisItem;
+  result: unknown;
+}
+
+export type AnalysisCompleteListener = (event: AnalysisCompleteEvent) => void;
+
 /**
  * Non-blocking asynchronous analysis queue with debouncing and memory caching.
  * Debounces rapid paste events (default: 500ms) and prevents duplicate analysis
@@ -32,6 +39,7 @@ export class AnalysisQueue {
   private isProcessing = false;
   private debounceTimer?: NodeJS.Timeout;
   private resultCache = new Map<string, unknown>();
+  private listeners: AnalysisCompleteListener[] = [];
 
   constructor(options?: AnalysisQueueOptions) {
     this.debounceMs = options?.debounceMs ?? 500;
@@ -103,11 +111,21 @@ export class AnalysisQueue {
           continue;
         }
 
+        let result: unknown;
         if (this.worker) {
-          const result = await this.worker(item);
+          result = await this.worker(item);
           this.cacheResult(key, result ?? true);
         } else {
+          result = true;
           this.cacheResult(key, true);
+        }
+
+        for (const listener of this.listeners) {
+          try {
+            listener({ item, result });
+          } catch {
+            // Ignore subscriber errors to preserve queue execution
+          }
         }
       }
     } finally {
@@ -128,6 +146,18 @@ export class AnalysisQueue {
     this.resultCache.set(key, result);
   }
 
+  public onAnalysisComplete(listener: AnalysisCompleteListener): { dispose(): void } {
+    this.listeners.push(listener);
+    return {
+      dispose: () => {
+        const index = this.listeners.indexOf(listener);
+        if (index >= 0) {
+          this.listeners.splice(index, 1);
+        }
+      }
+    };
+  }
+
   public clearCache(): void {
     this.resultCache.clear();
   }
@@ -138,6 +168,29 @@ export class AnalysisQueue {
       this.debounceTimer = undefined;
     }
     this.queue = [];
+    this.listeners = [];
   }
 }
 
+/**
+ * Creates an event handler compatible with PasteMonitor that delegates
+ * detected paste events into the asynchronous analysis queue.
+ */
+export function createPasteAnalysisHandler(
+  queue: AnalysisQueue,
+  generateFingerprint?: (text: string) => string
+): (paste: { text: string; languageId: string; documentUri: unknown; range: unknown }) => void {
+  let counter = 0;
+  return (paste) => {
+    const fingerprint = generateFingerprint ? generateFingerprint(paste.text) : paste.text.trim();
+    queue.enqueue({
+      id: `paste-${Date.now()}-${++counter}`,
+      text: paste.text,
+      fingerprint,
+      fingerprintHash: fingerprint,
+      languageId: paste.languageId,
+      documentUri: paste.documentUri,
+      range: paste.range
+    });
+  };
+}
