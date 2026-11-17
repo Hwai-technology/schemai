@@ -38,6 +38,16 @@
         "command": "schemaAI.analyzeFile",
         "title": "Analyze File",
         "category": "SchemAI"
+      },
+      {
+        "command": "schemaAI.login",
+        "title": "Sign in to GitHub",
+        "category": "SchemAI"
+      },
+      {
+        "command": "schemaAI.disconnect",
+        "title": "Sign out of GitHub",
+        "category": "SchemAI"
       }
     ],
     "menus": {
