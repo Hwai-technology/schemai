@@ -6,6 +6,7 @@ import type { AlertInput } from '../../alerts/diagnosticsManager';
 import {
   DecoratableEditor,
   DecorationTypeFactory,
+  DocumentCloseSource,
   EditorDecorator
 } from '../../alerts/editorDecorator';
 
@@ -158,5 +159,77 @@ describe('EditorDecorator (HU-11 T2)', () => {
       factory.created.map((type) => type.disposeCalls),
       [1, 1]
     );
+  });
+});
+
+/** Fake `vscode.workspace`: keeps the close listener so the test can fire a close event. */
+class FakeCloseSource implements DocumentCloseSource {
+  private listener?: (doc: { uri: vscode.Uri }) => void;
+  public subscriptionDisposed = false;
+
+  public onDidCloseTextDocument(listener: (doc: { uri: vscode.Uri }) => void): vscode.Disposable {
+    this.listener = listener;
+    return {
+      dispose: () => {
+        this.subscriptionDisposed = true;
+      }
+    } as vscode.Disposable;
+  }
+
+  public close(uri: vscode.Uri): void {
+    this.listener?.({ uri });
+  }
+}
+
+describe('EditorDecorator on document close (HU-11 T2b)', () => {
+  it('closing a decorated document sets both decoration types to [] for that editor', () => {
+    const factory = new FakeFactory();
+    const closeSource = new FakeCloseSource();
+    const decorator = new EditorDecorator(factory, closeSource);
+    const editor = new FakeEditor(fakeUri('file:///copied.ts'));
+    decorator.apply(editor, [alert('high'), alert('medium')]);
+    const callsBeforeClose = editor.calls.length;
+
+    closeSource.close(fakeUri('file:///copied.ts'));
+
+    assert.strictEqual(editor.calls.length, callsBeforeClose + 2);
+    assert.deepStrictEqual(editor.rangesFor(factory.typeWithColor(ERROR_COLOR)), []);
+    assert.deepStrictEqual(editor.rangesFor(factory.typeWithColor(WARNING_COLOR)), []);
+  });
+
+  it('closing a document that was never decorated does not call setDecorations', () => {
+    const factory = new FakeFactory();
+    const closeSource = new FakeCloseSource();
+    const decorator = new EditorDecorator(factory, closeSource);
+    const editor = new FakeEditor(fakeUri('file:///copied.ts'));
+    decorator.apply(editor, [alert('high')]);
+    const callsBeforeClose = editor.calls.length;
+
+    closeSource.close(fakeUri('file:///never-decorated.ts'));
+
+    assert.strictEqual(editor.calls.length, callsBeforeClose);
+  });
+
+  it('closing the same document again does nothing, because it was forgotten', () => {
+    const factory = new FakeFactory();
+    const closeSource = new FakeCloseSource();
+    const decorator = new EditorDecorator(factory, closeSource);
+    const editor = new FakeEditor(fakeUri('file:///copied.ts'));
+    decorator.apply(editor, [alert('high')]);
+    closeSource.close(fakeUri('file:///copied.ts'));
+    const callsAfterFirstClose = editor.calls.length;
+
+    closeSource.close(fakeUri('file:///copied.ts'));
+
+    assert.strictEqual(editor.calls.length, callsAfterFirstClose);
+  });
+
+  it('dispose() disposes the close subscription', () => {
+    const closeSource = new FakeCloseSource();
+    const decorator = new EditorDecorator(new FakeFactory(), closeSource);
+
+    decorator.dispose();
+
+    assert.strictEqual(closeSource.subscriptionDisposed, true);
   });
 });
