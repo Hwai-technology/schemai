@@ -19,24 +19,32 @@ interface UpdateCall {
 interface FakeConfiguration {
   configuration: vscode.WorkspaceConfiguration;
   updates: UpdateCall[];
+  /**
+   * Builds a new configuration object over the same persisted values, the way
+   * VS Code does when it reloads a window (the store survives, the object does not).
+   */
+  reload: () => vscode.WorkspaceConfiguration;
 }
 
-const fakeConfiguration = (values: Record<string, unknown> = {}): FakeConfiguration => {
+const fakeConfiguration = (initialValues: Record<string, unknown> = {}): FakeConfiguration => {
+  const values: Record<string, unknown> = { ...initialValues };
   const updates: UpdateCall[] = [];
-  const configuration = {
-    get: <T>(key: string, defaultValue?: T): T | undefined =>
-      Object.prototype.hasOwnProperty.call(values, key) ? (values[key] as T) : defaultValue,
-    update: async (
-      key: string,
-      value: unknown,
-      target?: vscode.ConfigurationTarget
-    ): Promise<void> => {
-      updates.push({ key, value, target });
-      values[key] = value;
-    }
-  } as unknown as vscode.WorkspaceConfiguration;
 
-  return { configuration, updates };
+  const build = (): vscode.WorkspaceConfiguration =>
+    ({
+      get: <T>(key: string, defaultValue?: T): T | undefined =>
+        Object.prototype.hasOwnProperty.call(values, key) ? (values[key] as T) : defaultValue,
+      update: async (
+        key: string,
+        value: unknown,
+        target?: vscode.ConfigurationTarget
+      ): Promise<void> => {
+        updates.push({ key, value, target });
+        values[key] = value;
+      }
+    } as unknown as vscode.WorkspaceConfiguration);
+
+  return { configuration: build(), updates, reload: build };
 };
 
 // vscode.ConfigurationTarget.Workspace; the real enum cannot be loaded by plain Mocha.
@@ -106,5 +114,76 @@ describe('ConfigManager (HU-01 T3)', () => {
       { key: PROJECT_LICENSE_SETTING, value: 'Apache-2.0', target: WORKSPACE_TARGET }
     ]);
     assert.strictEqual(ConfigManager.getPolicy(configuration).projectLicense, 'Apache-2.0');
+  });
+});
+
+describe('ConfigManager persistence (HU-01 T5)', () => {
+  it('reads a saved project license back after a reload', async () => {
+    const fake = fakeConfiguration();
+
+    await ConfigManager.saveProjectLicense(fake.configuration, 'GPL-3.0', WORKSPACE_TARGET);
+
+    const reloaded = fake.reload();
+    assert.strictEqual(ConfigManager.getPolicy(reloaded).projectLicense, 'GPL-3.0');
+  });
+
+  it('persists the whole policy to workspace settings', async () => {
+    const fake = fakeConfiguration();
+    const policy = {
+      projectLicense: 'Apache-2.0',
+      allowedLicenses: ['MIT', 'Apache-2.0'],
+      restrictedLicenses: ['GPL-3.0', 'AGPL-3.0']
+    };
+
+    await ConfigManager.savePolicy(fake.configuration, policy, WORKSPACE_TARGET);
+
+    assert.deepStrictEqual(fake.updates, [
+      { key: PROJECT_LICENSE_SETTING, value: 'Apache-2.0', target: WORKSPACE_TARGET },
+      {
+        key: ALLOWED_LICENSES_SETTING,
+        value: ['MIT', 'Apache-2.0'],
+        target: WORKSPACE_TARGET
+      },
+      {
+        key: RESTRICTED_LICENSES_SETTING,
+        value: ['GPL-3.0', 'AGPL-3.0'],
+        target: WORKSPACE_TARGET
+      }
+    ]);
+    assert.deepStrictEqual(ConfigManager.getPolicy(fake.reload()), policy);
+  });
+
+  it('keeps the persisted policy after several reloads', async () => {
+    const fake = fakeConfiguration();
+    const policy = {
+      projectLicense: 'GPL-2.0',
+      allowedLicenses: ['GPL-2.0'],
+      restrictedLicenses: []
+    };
+
+    await ConfigManager.savePolicy(fake.configuration, policy, WORKSPACE_TARGET);
+
+    assert.deepStrictEqual(ConfigManager.getPolicy(fake.reload()), policy);
+    assert.deepStrictEqual(ConfigManager.getPolicy(fake.reload()), policy);
+  });
+
+  it('copies the license lists so later policy mutations do not leak into settings', async () => {
+    const fake = fakeConfiguration();
+    const policy = {
+      projectLicense: 'ISC',
+      allowedLicenses: ['ISC'],
+      restrictedLicenses: ['SSPL']
+    };
+
+    await ConfigManager.savePolicy(fake.configuration, policy, WORKSPACE_TARGET);
+
+    policy.allowedLicenses.push('AGPL-3.0');
+    policy.restrictedLicenses.length = 0;
+
+    assert.deepStrictEqual(ConfigManager.getPolicy(fake.reload()), {
+      projectLicense: 'ISC',
+      allowedLicenses: ['ISC'],
+      restrictedLicenses: ['SSPL']
+    });
   });
 });
