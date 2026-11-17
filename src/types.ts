@@ -65,3 +65,44 @@ export interface SpdxLicense {
     readonly category: SpdxLicenseCategory;
 }
 
+/** License id used when no license could be detected for the source. */
+export const NO_LICENSE = 'NONE' as const;
+
+/** Pasted code to analyse; maps 1:1 from DetectedPasteEvent (documentUri -> uri). */
+export interface CodeFragment {
+    readonly text: string;
+    readonly languageId: string;
+    readonly uri: vscode.Uri;
+    readonly range: vscode.Range;
+    readonly fingerprint?: string;
+}
+
+/** External source where the fragment was found, with a similarity from 0 to 1. */
+export interface SourceMatch {
+    readonly repository: string;
+    readonly url: string;
+    readonly path: string;
+    readonly similarity: number;
+}
+
+/** License of a source: any SPDX id (not only SpdxLicenseId) or NO_LICENSE. */
+export interface LicenseInfo {
+    readonly spdxId: string;
+    readonly name?: string;
+}
+
+/** Result of evaluating a source match against the project license policy. */
+export interface RiskAssessment {
+    readonly severity: RiskSeverity;
+    readonly reason: string;
+    readonly license: LicenseInfo;
+    readonly match: SourceMatch;
+}
+
+/** Project license and the source licenses it allows or restricts. */
+export interface ProjectPolicy {
+    readonly projectLicense: string;
+    readonly allowedLicenses: readonly string[];
+    readonly restrictedLicenses: readonly string[];
+}
+
