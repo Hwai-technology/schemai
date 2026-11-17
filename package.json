@@ -25,6 +25,11 @@
           "type": "string",
           "default": "MIT",
           "description": "SPDX identifier of the project license used to evaluate external code compatibility."
+        },
+        "schemaAI.autoAnalyze": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically analyze code pasted into the editor. Disable to only analyze on demand."
         }
       }
     },

@@ -13,6 +13,12 @@ export interface DetectedPasteEvent {
 
 export type PasteHandler = (paste: DetectedPasteEvent) => void;
 
+/**
+ * Decides whether automatic analysis is enabled for the current workspace.
+ * Re-evaluated on every change so configuration updates apply without reload.
+ */
+export type AutoAnalyzeGate = () => boolean;
+
 export interface WorkspaceEventSource {
   onDidChangeTextDocument: (
     listener: (e: vscode.TextDocumentChangeEvent) => any
@@ -25,10 +31,16 @@ export interface WorkspaceEventSource {
 export class PasteMonitor {
   private readonly clipboard: ClipboardReader;
   private readonly onPaste: PasteHandler;
+  private readonly isAutoAnalyzeEnabled?: AutoAnalyzeGate;
 
-  constructor(clipboard: ClipboardReader, onPaste: PasteHandler) {
+  constructor(
+    clipboard: ClipboardReader,
+    onPaste: PasteHandler,
+    isAutoAnalyzeEnabled?: AutoAnalyzeGate
+  ) {
     this.clipboard = clipboard;
     this.onPaste = onPaste;
+    this.isAutoAnalyzeEnabled = isAutoAnalyzeEnabled;
   }
 
   public register(
@@ -47,6 +59,10 @@ export class PasteMonitor {
   public async handleTextDocumentChange(
     event: vscode.TextDocumentChangeEvent
   ): Promise<void> {
+    if (this.isAutoAnalyzeEnabled && !this.isAutoAnalyzeEnabled()) {
+      return;
+    }
+
     if (event.contentChanges.length === 0) {
       return;
     }
