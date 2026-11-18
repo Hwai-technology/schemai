@@ -30,6 +30,19 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically analyze code pasted into the editor. Disable to only analyze on demand."
+        },
+        "schemaAI.similarityThreshold": {
+          "type": "number",
+          "default": 0.8,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum token similarity (0–1) a source must reach to be reported as a match."
+        },
+        "schemaAI.minFragmentLines": {
+          "type": "integer",
+          "default": 3,
+          "minimum": 1,
+          "description": "Minimum number of lines a pasted fragment must have to be analyzed."
         }
       }
     },
