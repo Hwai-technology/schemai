@@ -46,4 +46,24 @@ describe('LicenseDetector', () => {
 
     assert.strictEqual(result.spdxId, 'NONE');
   });
+
+  it('reports a repository without a license for manual review', () => {
+    const result = LicenseDetector.parseRepoMetadataLicense({
+      license: null
+    });
+
+    assert.strictEqual(result.licenseName, 'sin licencia');
+    assert.strictEqual(result.requiresReview, true);
+  });
+
+  it('calculates the detection hit rate over a labelled sample', () => {
+    const hitRate = LicenseDetector.calculateHitRate([
+      { expected: 'MIT', detected: 'MIT' },
+      { expected: 'GPL-3.0', detected: 'GPL-3.0' },
+      { expected: 'NONE', detected: 'MIT' },
+      { expected: 'Apache-2.0', detected: 'Apache-2.0' }
+    ]);
+
+    assert.strictEqual(hitRate, 75);
+  });
 });
