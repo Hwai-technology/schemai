@@ -4,9 +4,11 @@ import type * as vscode from 'vscode';
 import type { RiskSeverity } from '../../types';
 import {
   AlertInput,
+  AlertLookup,
   DiagnosticPort,
   DiagnosticsManager,
-  DIAGNOSTIC_SEVERITY
+  DIAGNOSTIC_SEVERITY,
+  DIAGNOSTIC_SOURCE
 } from '../../alerts/diagnosticsManager';
 
 interface FakeDiagnostic {
@@ -132,5 +134,49 @@ describe('DiagnosticsManager (HU-11 T1)', () => {
     const [diagnostic] = diagnosticsFor(port, input.uri);
     assert.ok(diagnostic.message.includes('AGPL-3.0'), diagnostic.message);
     assert.ok(diagnostic.message.includes('mongodb/mongo'), diagnostic.message);
+  });
+});
+
+/** Fake range from (startLine, 0) to (endLine, 10); VS Code hands quick fixes a copy, never the same object. */
+const linesRange = (startLine: number, endLine: number): vscode.Range =>
+  ({
+    start: { line: startLine, character: 0 },
+    end: { line: endLine, character: 10 }
+  } as unknown as vscode.Range);
+
+describe('DiagnosticsManager as AlertLookup (HU-15 T1)', () => {
+  it('exposes the diagnostic source used by every SchemAI diagnostic', () => {
+    assert.strictEqual(DIAGNOSTIC_SOURCE, 'SchemAI');
+  });
+
+  it('findAlert returns the alert reported for that uri and range', () => {
+    const manager = new DiagnosticsManager(new FakeDiagnosticPort(), fakeBuilder);
+    const input = alert('high', { range: linesRange(3, 5) });
+    manager.report(input);
+
+    const lookup: AlertLookup = manager;
+
+    assert.strictEqual(lookup.findAlert(fakeUri('file:///copied.ts'), linesRange(3, 5)), input);
+  });
+
+  it('findAlert returns undefined for another range or another document', () => {
+    const manager = new DiagnosticsManager(new FakeDiagnosticPort(), fakeBuilder);
+    manager.report(alert('high', { range: linesRange(3, 5) }));
+
+    assert.strictEqual(manager.findAlert(fakeUri('file:///copied.ts'), linesRange(4, 5)), undefined);
+    assert.strictEqual(manager.findAlert(fakeUri('file:///other.ts'), linesRange(3, 5)), undefined);
+  });
+
+  it('findAlert returns undefined after clear(uri) and clearAll()', () => {
+    const manager = new DiagnosticsManager(new FakeDiagnosticPort(), fakeBuilder);
+    manager.report(alert('high', { range: linesRange(3, 5) }));
+    manager.report(alert('high', { uri: fakeUri('file:///other.ts'), range: linesRange(1, 1) }));
+
+    manager.clear(fakeUri('file:///copied.ts'));
+    assert.strictEqual(manager.findAlert(fakeUri('file:///copied.ts'), linesRange(3, 5)), undefined);
+    assert.ok(manager.findAlert(fakeUri('file:///other.ts'), linesRange(1, 1)));
+
+    manager.clearAll();
+    assert.strictEqual(manager.findAlert(fakeUri('file:///other.ts'), linesRange(1, 1)), undefined);
   });
 });
