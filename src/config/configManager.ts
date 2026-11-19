@@ -82,4 +82,21 @@ export class ConfigManager {
   ): Promise<void> {
     await configuration.update(PROJECT_LICENSE_SETTING, license, target);
   }
+
+  /**
+   * Saves the whole policy so it survives a window reload.
+   *
+   * VS Code keeps workspace settings on disk; the next session reads them back
+   * through {@link ConfigManager.getPolicy}. The arrays are copied before being
+   * written so later mutations of `policy` cannot change what was persisted.
+   */
+  public static async savePolicy(
+    configuration: ConfigurationWriter,
+    policy: ProjectPolicy,
+    target: vscode.ConfigurationTarget
+  ): Promise<void> {
+    await configuration.update(PROJECT_LICENSE_SETTING, policy.projectLicense, target);
+    await configuration.update(ALLOWED_LICENSES_SETTING, [...policy.allowedLicenses], target);
+    await configuration.update(RESTRICTED_LICENSES_SETTING, [...policy.restrictedLicenses], target);
+  }
 }

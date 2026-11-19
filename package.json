@@ -25,6 +25,11 @@
           "type": "string",
           "default": "MIT",
           "description": "SPDX identifier of the project license used to evaluate external code compatibility."
+        },
+        "schemaAI.autoAnalyze": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically analyze code pasted into the editor. Disable to only analyze on demand."
         }
       }
     },
@@ -37,6 +42,16 @@
       {
         "command": "schemaAI.analyzeFile",
         "title": "Analyze File",
+        "category": "SchemAI"
+      },
+      {
+        "command": "schemaAI.login",
+        "title": "Sign in to GitHub",
+        "category": "SchemAI"
+      },
+      {
+        "command": "schemaAI.disconnect",
+        "title": "Sign out of GitHub",
         "category": "SchemAI"
       }
     ],
