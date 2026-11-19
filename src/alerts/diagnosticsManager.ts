@@ -9,6 +9,9 @@ export interface AlertInput {
   license: string;
   sourceRepo: string;
   reason: string;
+  sourceUrl?: string;
+  /** Similarity with the source, from 0 to 1. */
+  similarity?: number;
 }
 
 export interface DiagnosticPort {
