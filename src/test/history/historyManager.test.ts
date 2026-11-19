@@ -160,3 +160,78 @@ describe('HistoryManager (HU-13 T1)', () => {
     assert.strictEqual(ctx.shown().length, 1);
   });
 });
+
+describe('HistoryManager ignored alerts (HU-13 T2)', () => {
+  it('lists only the alerts marked as false positive', async () => {
+    const ctx = setup();
+    const ignored = await reportAndRecord(ctx, alert('high', 1, 'copied GPL code'));
+    const reviewed = await reportAndRecord(ctx, alert('medium', 5, 'copied MPL code'));
+    await reportAndRecord(ctx, alert('high', 9, 'copied AGPL code'));
+    await ctx.history.markFalsePositive(ignored.id);
+    await ctx.history.markReviewed(reviewed.id);
+
+    const list = ctx.history.getIgnored();
+
+    assert.deepStrictEqual(list.map((r) => r.id), [ignored.id]);
+    assert.strictEqual(list[0].reason, 'copied GPL code');
+  });
+
+  it('the list of ignored alerts survives a restart', async () => {
+    const first = setup();
+    const ignored = await reportAndRecord(first, alert('high', 1, 'copied GPL code'));
+    await first.history.markFalsePositive(ignored.id);
+
+    const afterRestart = setup(first.memento);
+
+    assert.deepStrictEqual(afterRestart.history.getIgnored().map((r) => r.id), [ignored.id]);
+  });
+
+  it('restoring an ignored alert makes its diagnostic appear again', async () => {
+    const ctx = setup();
+    const ignored = await reportAndRecord(ctx, alert('high', 1, 'copied GPL code'));
+    await reportAndRecord(ctx, alert('medium', 5, 'copied MPL code'));
+    await ctx.history.markFalsePositive(ignored.id);
+    assert.strictEqual(ctx.shown().length, 1);
+
+    const ok = await ctx.history.restore(ignored.id);
+
+    assert.strictEqual(ok, true);
+    assert.strictEqual(ctx.shown().length, 2);
+    assert.ok(ctx.shown().some((m) => /copied GPL code/.test(m)));
+  });
+
+  it('a restored alert is pending again in workspaceState and leaves the ignored list', async () => {
+    const ctx = setup();
+    const ignored = await reportAndRecord(ctx, alert('high', 1, 'copied GPL code'));
+    await ctx.history.markFalsePositive(ignored.id);
+
+    await ctx.history.restore(ignored.id);
+
+    const stored = ctx.memento.get<{ id: string; reviewStatus: string }[]>(HISTORY_STORAGE_KEY);
+    assert.strictEqual(stored?.find((r) => r.id === ignored.id)?.reviewStatus, 'PENDING');
+    assert.deepStrictEqual(ctx.history.getIgnored(), []);
+  });
+
+  it('a restored alert can be ignored again', async () => {
+    const ctx = setup();
+    const ignored = await reportAndRecord(ctx, alert('high', 1, 'copied GPL code'));
+    await ctx.history.markFalsePositive(ignored.id);
+    await ctx.history.restore(ignored.id);
+
+    await ctx.history.markFalsePositive(ignored.id);
+
+    assert.deepStrictEqual(ctx.shown(), []);
+    assert.deepStrictEqual(ctx.history.getIgnored().map((r) => r.id), [ignored.id]);
+  });
+
+  it('restoring an alert that is not ignored, or an unknown id, returns false and changes nothing', async () => {
+    const ctx = setup();
+    const pending = await reportAndRecord(ctx, alert('high', 1, 'copied GPL code'));
+    const before = ctx.memento.data.get(HISTORY_STORAGE_KEY);
+
+    assert.strictEqual(await ctx.history.restore(pending.id), false);
+    assert.strictEqual(await ctx.history.restore('unknown-id'), false);
+    assert.strictEqual(ctx.memento.data.get(HISTORY_STORAGE_KEY), before);
+    assert.strictEqual(ctx.shown().length, 1);
+  });
+});
