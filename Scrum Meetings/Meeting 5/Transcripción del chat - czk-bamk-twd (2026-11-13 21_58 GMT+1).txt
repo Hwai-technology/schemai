@@ -1,0 +1,20 @@
+00:01:00.996,00:01:03.996
+Leon Skalczyński: declared LICENSE file and more. i finished T4 but i still need to commit it, and create PR
+
+00:01:09.527,00:01:12.527
+Malyus 999: ok
+
+00:02:22.795,00:02:25.795
+Alexander Emil Tupaq Roldan Palomino: Things I did today:
+- I wrote in P5 the completion date of HITO 1.
+- Noticed hito 0 can't be completed since it's currently being blocked by "core/types.ts" not existing in the development branch.
+- Created the branch "feature/HU-07-T2" from "develop"
+- I couldn't find Yunus's "test" commit for QA·T1 to review it
+- Currently missing the tests for src/test/search/queryBuilder.test.ts, src/test/search/githubSearchClient.test.ts (They're created and mostly written just not uploaded yet. Will be finished in the next few minutes)
+
+00:03:12.447,00:03:15.447
+Alexander Emil Tupaq Roldan Palomino: Correct
+
+00:03:33.784,00:03:36.784
+Alexander Emil Tupaq Roldan Palomino: Okay, I'll check
+

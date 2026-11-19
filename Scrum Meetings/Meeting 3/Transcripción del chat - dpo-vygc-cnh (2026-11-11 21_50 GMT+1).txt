@@ -1,0 +1,9 @@
+00:02:04.320,00:02:07.320
+Leon Skalczyński: sorry no mic, i created spdx file which stores and manages project licenses, along with some tests, commited and created PR
+
+00:04:34.303,00:04:37.303
+Leon Skalczyński: yes
+
+00:06:33.555,00:06:36.555
+Leon Skalczyński: bye
+
