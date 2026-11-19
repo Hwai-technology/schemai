@@ -28,6 +28,14 @@ export type DiagnosticBuilder = (
   severity: number
 ) => vscode.Diagnostic;
 
+/** `source` of every SchemAI diagnostic; quick fixes use it to recognise them. */
+export const DIAGNOSTIC_SOURCE = 'SchemAI';
+
+/** Finds the alert behind a reported diagnostic, e.g. to build its quick fixes. */
+export interface AlertLookup {
+  findAlert(uri: vscode.Uri, range: vscode.Range): AlertInput | undefined;
+}
+
 /** Same numeric values as vscode.DiagnosticSeverity. */
 export const DIAGNOSTIC_SEVERITY = {
   Error: 0,
@@ -43,12 +51,17 @@ const SEVERITY_BY_RISK: Record<RiskSeverity, number | undefined> = {
   none: undefined
 };
 
+const samePosition = (a: vscode.Position, b: vscode.Position): boolean =>
+  a.line === b.line && a.character === b.character;
+
 /**
  * Publishes license risk alerts to the Problems panel through a diagnostic collection.
  */
-export class DiagnosticsManager {
+export class DiagnosticsManager implements AlertLookup {
   private readonly collection: DiagnosticPort;
   private readonly build: DiagnosticBuilder;
+  /** Reported alerts by document (uri.toString()), so quick fixes can read their data. */
+  private readonly alertsByDocument = new Map<string, AlertInput[]>();
 
   constructor(collection: DiagnosticPort, build: DiagnosticBuilder) {
     this.collection = collection;
@@ -63,7 +76,7 @@ export class DiagnosticsManager {
       vs.languages.createDiagnosticCollection('schemai'),
       (range, message, severity) => {
         const diagnostic = new vs.Diagnostic(range, message, severity);
-        diagnostic.source = 'SchemAI';
+        diagnostic.source = DIAGNOSTIC_SOURCE;
         return diagnostic;
       }
     );
@@ -80,14 +93,26 @@ export class DiagnosticsManager {
       ` — License: ${alert.license} — Source: ${alert.sourceRepo}`;
     const existing = this.collection.get(alert.uri) ?? [];
     this.collection.set(alert.uri, [...existing, this.build(alert.range, message, severity)]);
+
+    const key = alert.uri.toString();
+    this.alertsByDocument.set(key, [...(this.alertsByDocument.get(key) ?? []), alert]);
+  }
+
+  /** Matches by position: VS Code passes quick fixes a copy of the diagnostic range. */
+  public findAlert(uri: vscode.Uri, range: vscode.Range): AlertInput | undefined {
+    return this.alertsByDocument
+      .get(uri.toString())
+      ?.find((alert) => samePosition(alert.range.start, range.start) && samePosition(alert.range.end, range.end));
   }
 
   public clear(uri: vscode.Uri): void {
     this.collection.delete(uri);
+    this.alertsByDocument.delete(uri.toString());
   }
 
   public clearAll(): void {
     this.collection.clear();
+    this.alertsByDocument.clear();
   }
 
   public dispose(): void {
