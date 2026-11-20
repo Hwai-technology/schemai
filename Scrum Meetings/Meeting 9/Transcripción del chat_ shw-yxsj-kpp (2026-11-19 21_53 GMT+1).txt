@@ -1,0 +1,19 @@
+00:00:35.590,00:00:38.590
+Leon Skalczyński: Did task HU-04-T3, reviewed David's and Yunus' PRs.
+
+00:00:57.977,00:01:00.977
+Alexander Emil Tupaq Roldan Palomino: I'll list here the things I've done for today (day 9) as well as for days 7 and 8 since I wasn't able to attend those meetings:
+
+Day 7 (Tue 17/11):
+- Opened and linked PR #51 (HU-07 T2) to develop with reviewer Ahmet and moved its ClickUp task to EN REVISIÓN
+- Created branch feature/HU-07-T3 with TDD tests in RED phase (similarity.test.ts)
+- Conducted and submitted the rev-alexander code review approving PR #40 (HU-12 T1, Abdul)
+
+Day 8 (Wed 18/11):
+- Implemented SimilarityCalculator in src/search/similarity.ts to achieve GREEN phase with clean linting and all tests passing
+- Conducted and submitted the code review approving PR #43 (HU-05 T2, Ahmet)
+
+Day 9 (Thu 19/11):
+- Opened and linked PR #52 (HU-07 T3) to develop with reviewer Yunus and moved its ClickUp task to EN REVISIÓN
+- Conducted and submitted the rev-alexander code review approving PR #46 (HU-05 T3, Ahmet).
+
