@@ -11,6 +11,8 @@ export type AlertsPort = Pick<DiagnosticsManager, 'report' | 'clear'>;
 export class HistoryManager {
   /** Alerts reported in this session that are still shown, by record id. */
   private readonly activeAlerts = new Map<string, AlertInput>();
+  /** Alerts marked as false positive in this session, kept so they can be shown again on restore. */
+  private readonly ignoredAlerts = new Map<string, AlertInput>();
 
   constructor(
     private readonly storage: HistoryStorage,
@@ -49,9 +51,37 @@ export class HistoryManager {
     const alert = this.activeAlerts.get(id);
     if (updated && alert) {
       this.activeAlerts.delete(id);
+      this.ignoredAlerts.set(id, alert);
       this.redrawDocument(alert.uri);
     }
     return updated;
+  }
+
+  /** Alerts the user marked as false positive (also those from previous sessions). */
+  public getIgnored(): IAuditRecord[] {
+    return this.getRecords().filter((record) => record.reviewStatus === 'FALSE_POSITIVE');
+  }
+
+  /**
+   * Undoes a false positive: the record is pending again and its diagnostic is shown again.
+   * Returns `false` (and changes nothing) if the alert is not ignored.
+   *
+   * An alert ignored in a previous session has no live document data any more, so only its
+   * status changes; the diagnostic comes back the next time that code is analysed.
+   */
+  public async restore(id: string): Promise<boolean> {
+    if (!this.getIgnored().some((record) => record.id === id)) {
+      return false;
+    }
+    await this.storage.update(id, { reviewStatus: 'PENDING' });
+
+    const alert = this.ignoredAlerts.get(id);
+    if (alert) {
+      this.ignoredAlerts.delete(id);
+      this.activeAlerts.set(id, alert);
+      this.alerts.report(alert);
+    }
+    return true;
   }
 
   /**
