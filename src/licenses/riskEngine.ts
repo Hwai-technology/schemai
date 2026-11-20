@@ -32,7 +32,7 @@ export class RiskEngine {
     if (restrictedLicenses.includes(sourceLicense)) {
       return {
         riskLevel: 'high',
-        reason: `GPL-3.0 match is incompatible with the MIT project policy (${sourceLicense} is restricted).`,
+        reason: `The detected license (${source.license}) is restricted by the project policy (${policy.projectLicense}).`,
         legalNotice: LEGAL_NOTICE
       };
     }

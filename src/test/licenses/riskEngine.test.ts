@@ -61,4 +61,23 @@ describe('RiskEngine', () => {
     assert.strictEqual(typeof result.legalNotice, 'string');
     assert.ok(result.legalNotice.length > 0);
   });
+
+  it('builds the restricted-license reason from the actual policy', () => {
+    const result = RiskEngine.evaluateRisk(
+      {
+        repository: 'example/agpl-repository',
+        url: 'https://github.com/example/agpl-repository',
+        license: 'AGPL-3.0',
+        similarity: 0.98
+      },
+      {
+        projectLicense: 'Apache-2.0',
+        allowedLicenses: ['Apache-2.0'],
+        restrictedLicenses: ['AGPL-3.0']
+      }
+    );
+
+    assert.strictEqual(result.riskLevel, 'high');
+    assert.match(result.reason, /AGPL-3\.0.*Apache-2\.0/i);
+  });
 });
