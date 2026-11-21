@@ -165,7 +165,7 @@
 
 **Ready by the Sprint Review on Mon 23/11:**
 - [ ] COORD: today's step done.
-- [ ] MET — % HU completadas: value written on the P5 page and said in the meeting.
+- [x] MET — % HU completadas: value written on the P5 page and said in the meeting.
 
 ## Task cards
 
