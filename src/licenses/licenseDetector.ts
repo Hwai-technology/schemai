@@ -16,6 +16,12 @@ export interface RepositoryLicenseMetadata {
 export interface ParsedRepositoryLicense {
   licenseName: string;
   spdxId: string;
+  requiresReview?: boolean;
+}
+
+export interface LabelledLicenseSample {
+  expected: string;
+  detected: string;
 }
 
 export class LicenseDetector {
@@ -74,12 +80,29 @@ export class LicenseDetector {
     const spdxId = metadata?.spdx_id;
 
     if (!spdxId || spdxId === 'NOASSERTION') {
-      return { licenseName: 'NONE', spdxId: 'NONE' };
+      return {
+        licenseName: metadata ? 'NONE' : 'sin licencia',
+        spdxId: 'NONE',
+        requiresReview: true
+      };
     }
 
     return {
       licenseName: spdxId || metadata.name || 'UNKNOWN',
-      spdxId
+      spdxId,
+      requiresReview: false
     };
+  }
+
+  public static calculateHitRate(samples: LabelledLicenseSample[]): number {
+    if (samples.length === 0) {
+      return 0;
+    }
+
+    const hits = samples.filter(sample =>
+      sample.expected.trim().toUpperCase() === sample.detected.trim().toUpperCase()
+    ).length;
+
+    return (hits / samples.length) * 100;
   }
 }
