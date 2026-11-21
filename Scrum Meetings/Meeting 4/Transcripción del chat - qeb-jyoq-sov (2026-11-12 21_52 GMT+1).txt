@@ -1,0 +1,16 @@
+00:01:28.679,00:01:31.679
+Alexander Emil Tupaq Roldan Palomino: I'm getting a microphone error but what I did was:
+
+Do what wasn't done yesterday (huelga) which is investigate GitHub limits for their code search API, which includes rate limits, result query limits, file size limits, where search queries actually search for the code snippet (only in main branches) and that the api search results are ordered by best match (can't be changed).
+
+Then for today, I wrote the report of the results that I investigated yesterday and posted it in a TXT file in HU-07 T1
+
+00:01:58.851,00:02:01.851
+Leon Skalczyński: I created ConfigManager to read and save the license and policy, and added 5 tests for it
+
+00:04:45.396,00:04:48.396
+Leon Skalczyński: i can't in the morning
+
+00:08:21.456,00:08:24.456
+Alexander Emil Tupaq Roldan Palomino: Okay
+

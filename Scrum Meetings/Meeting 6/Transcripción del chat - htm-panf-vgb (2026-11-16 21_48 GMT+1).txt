@@ -1,0 +1,13 @@
+00:02:36.642,00:02:39.642
+Leon Skalczyński: I implemented the persistence of config across VS Code sessions, created PR. Soon I will correct the mistakes/suggestions you gave me Yusuf.
+
+00:03:11.225,00:03:14.225
+Alexander Emil Tupaq Roldan Palomino: Hi!
+
+I implemented in src/search/githubSearchClient.ts and src/search/queryBuilder.ts what the tests needed and ran "npm test" until it was green. (Commit feat: HU-07 T2)
+
+I also refactored/cleaned the code with the tests green and ran "npm run lint".
+
+00:05:11.420,00:05:14.420
+Leon Skalczyński: Ok ok
+

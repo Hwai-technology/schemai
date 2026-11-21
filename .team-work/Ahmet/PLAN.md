@@ -79,19 +79,19 @@
 > ◆ H1 — Go / no-go decision on GitHub search (HU-07) is today.
 *Planned: about 2 h.*
 
-**[HU-06·T2 — Progress indicator with cancellation](https://app.clickup.com/t/1amfa05xxya)** (1,5 h)
+**[HU-06·T2 — Implementar el indicador de progreso con cancelación](https://app.clickup.com/t/1amfa05xxya)** (1,5 h)
 - Create the branch `feature/HU-06-T2` from `develop` (`git checkout develop && git pull && git checkout -b feature/HU-06-T2`).
 - **RED:** write the tests in `src/test/analysis/manualAnalysis.test.ts` for the cases in the task card below. Run `npm test`: they must **fail**, and for the right reason. Commit `test: HU-06 T2 Progress indicator with cancellation (red)` and push.
 - **GREEN:** implement in `src/analysis/manualAnalysis.ts` only what the tests need. Use (new: not in the prototype) as reference: copy the idea, not the whole file. Run `npm test` until it is green. Commit `feat: HU-06 T2 ...`.
 - **REFACTOR:** clean the code with the tests green, run `npm run lint`. Commit `refactor: ...` if you changed anything.
-- **PR:** open a pull request to `develop` titled `HU-06 T2: Progress indicator with cancellation`, paste the ClickUp link, move the task to **EN REVISIÓN** and tell **Leon** on WhatsApp (they have 24 h).
+- **PR:** open a pull request to `develop` titled `HU-06 T2: Implementar el indicador de progreso con cancelación`, paste the ClickUp link, move the task to **EN REVISIÓN** and tell **Leon** on WhatsApp (they have 24 h).
 
 **Reviews today**
 - HU-11·T1 (Abdul): check the first commit is `test:`, CI is green, the cases in the task card are covered and the DoD (P6 page 1a) is met. Approve or request changes in GitHub. (0,5 h)
 
 **Ready by the next meeting:**
 - [ ] HU-06·T2: PR open and task in EN REVISIÓN.
-- [ ] Reviews of today done (approved or changes requested).
+- [x] Reviews of today done (approved or changes requested).
 
 ### Day 5 — Fri 13/11
 *Planned: about 0,5 h.*
@@ -100,12 +100,12 @@
 - First measurement: HUs in COMPLETADOS / 15. Write the value and colour on P5 page 1 and say it in the meeting.
 
 **Ready by the next meeting:**
-- [ ] MET — % HU completadas: value written on the P5 page and said in the meeting.
+- [x] MET — % HU completadas: value written on the P5 page and said in the meeting.
 
 ### Day 6 — Mon 16/11
 *Planned: about 1 h.*
 
-**[HU-05·T2 — Asynchronous paste capture without blocking editing](https://app.clickup.com/t/1amfa05xxy8)** (1 h)
+**[HU-05·T2 — Implementar la captura asíncrona del pegado sin bloquear la edición](https://app.clickup.com/t/1amfa05xxy8)** (1 h)
 - Create the branch `feature/HU-05-T2` from `develop` (`git checkout develop && git pull && git checkout -b feature/HU-05-T2`).
 - **RED:** write the tests in `src/test/analysis/analysisQueue.test.ts` for the cases in the task card below. Run `npm test`: they must **fail**, and for the right reason. Commit `test: HU-05 T2 Asynchronous paste capture without blocking editing (red)` and push.
 
@@ -115,17 +115,17 @@
 ### Day 7 — Tue 17/11
 *Planned: about 1,5 h.*
 
-**[HU-05·T2 — Asynchronous paste capture without blocking editing](https://app.clickup.com/t/1amfa05xxy8)** (1 h)
+**[HU-05·T2 — Implementar la captura asíncrona del pegado sin bloquear la edición](https://app.clickup.com/t/1amfa05xxy8)** (1 h)
 - **GREEN:** implement in `src/analysis/analysisQueue.ts` only what the tests need. Use `.team-work/Ahmet/analysis/analysisQueue.ts` as reference: copy the idea, not the whole file. Run `npm test` until it is green. Commit `feat: HU-05 T2 ...`.
 - **REFACTOR:** clean the code with the tests green, run `npm run lint`. Commit `refactor: ...` if you changed anything.
-- **PR:** open a pull request to `develop` titled `HU-05 T2: Asynchronous paste capture without blocking editing`, paste the ClickUp link, move the task to **EN REVISIÓN** and tell **Alexander** on WhatsApp (they have 24 h).
+- **PR:** open a pull request to `develop` titled `HU-05 T2: Implementar la captura asíncrona del pegado sin bloquear la edición`, paste the ClickUp link, move the task to **EN REVISIÓN** and tell **Alexander** on WhatsApp (they have 24 h).
 
 **Reviews today**
 - HU-10·T1 (Yunus): check the first commit is `test:`, CI is green, the cases in the task card are covered and the DoD (P6 page 1a) is met. Approve or request changes in GitHub. (0,5 h)
 
 **Ready by the next meeting:**
 - [ ] HU-05·T2: PR open and task in EN REVISIÓN.
-- [ ] Reviews of today done (approved or changes requested).
+- [x] Reviews of today done (approved or changes requested).
 
 ### Day 8 — Wed 18/11
 *Planned: about 3 h.*
@@ -152,7 +152,7 @@
 - Integration: register every merged feature in `src/extension.ts` and add the smoke test.
 
 **Ready by the next meeting:**
-- [ ] COORD: today's step done.
+- [x] COORD: today's step done.
 
 ### Day 10 — Fri 20/11
 *Planned: about 2 h.*
@@ -164,8 +164,8 @@
 - Final value of the sprint, colour and the action rule if it is amber or red.
 
 **Ready by the Sprint Review on Mon 23/11:**
-- [ ] COORD: today's step done.
-- [ ] MET — % HU completadas: value written on the P5 page and said in the meeting.
+- [x] COORD: today's step done.
+- [x] MET — % HU completadas: value written on the P5 page and said in the meeting.
 
 ## Task cards
 
@@ -199,7 +199,7 @@
   - `Analyze file` sends the whole document text.
   - An empty selection shows an information message and does not analyse.
 
-### [HU-06·T2 — Progress indicator with cancellation](https://app.clickup.com/t/1amfa05xxya)
+### [HU-06·T2 — Implementar el indicador de progreso con cancelación](https://app.clickup.com/t/1amfa05xxya)
 - **Estimate:** 1,5 h · **Reviewer:** Leon · **Merged by:** Fri 13/11
 - **Reference code:** (new: not in the prototype)
 - **Goes in:** `src/analysis/manualAnalysis.ts`
@@ -209,7 +209,7 @@
   - If the cancellation token fires, no search is started.
   - At the end, a summary says how many fragments were analysed.
 
-### [HU-05·T2 — Asynchronous paste capture without blocking editing](https://app.clickup.com/t/1amfa05xxy8)
+### [HU-05·T2 — Implementar la captura asíncrona del pegado sin bloquear la edición](https://app.clickup.com/t/1amfa05xxy8)
 - **Estimate:** 2 h · **Reviewer:** Alexander · **Merged by:** Wed 18/11
 - **Reference code:** `.team-work/Ahmet/analysis/analysisQueue.ts`
 - **Goes in:** `src/analysis/analysisQueue.ts`
