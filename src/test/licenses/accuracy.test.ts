@@ -26,7 +26,10 @@ describe('LicenseDetector accuracy', () => {
       };
     });
 
-    const hitRate = LicenseDetector.calculateHitRate(results);
+    const correct = results.filter(result =>
+      result.expected.trim().toUpperCase() === result.detected.trim().toUpperCase()
+    ).length;
+    const hitRate = (correct / results.length) * 100;
 
     assert.ok(hitRate > 90, `Expected accuracy > 90%, received ${hitRate}%`);
   });
