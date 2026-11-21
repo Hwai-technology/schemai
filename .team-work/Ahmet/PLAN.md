@@ -164,7 +164,7 @@
 - Final value of the sprint, colour and the action rule if it is amber or red.
 
 **Ready by the Sprint Review on Mon 23/11:**
-- [ ] COORD: today's step done.
+- [x] COORD: today's step done.
 - [x] MET — % HU completadas: value written on the P5 page and said in the meeting.
 
 ## Task cards
