@@ -152,7 +152,7 @@
 - Integration: register every merged feature in `src/extension.ts` and add the smoke test.
 
 **Ready by the next meeting:**
-- [ ] COORD: today's step done.
+- [x] COORD: today's step done.
 
 ### Day 10 — Fri 20/11
 *Planned: about 2 h.*
