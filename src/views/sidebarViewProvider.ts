@@ -436,7 +436,7 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
       }
       <div class="brand-title">SchemAI</div>
     </div>
-    <div class="version-pill">v3.0.0</div>
+    <div class="version-pill">v3.0.1</div>
   </div>
 
   <!-- Quick Action Toolbar -->
