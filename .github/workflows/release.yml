@@ -41,16 +41,52 @@ jobs:
       - name: 🧪 Execute Unit Tests
         run: npm test
 
-      - name: 🏷️ Determine Release & Marketplace Versions
+      - name: 🏷️ Auto-Increment Marketplace Version & Determine Release
         id: version_info
         run: |
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          echo "Extension Marketplace Version: $PKG_VERSION"
-          # Release tag on GitHub is always kept at v0.1.0 (Sprint 1)
-          RELEASE_TAG="v0.1.0"
-          echo "GitHub Release Tag: $RELEASE_TAG"
-          echo "tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
-          echo "version=$PKG_VERSION" >> $GITHUB_OUTPUT
+          node -e '
+            const https = require("https");
+            const fs = require("fs");
+
+            https.get("https://open-vsx.org/api/schemai-team/schema-ai", (res) => {
+              let data = "";
+              res.on("data", c => data += c);
+              res.on("end", () => {
+                let ovsxVersions = ["3.0.0"];
+                try {
+                  const json = JSON.parse(data);
+                  ovsxVersions = Object.keys(json.allVersions || {}).filter(v => v !== "latest");
+                } catch (e) {}
+
+                const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+                let maxMajor = 3, maxMinor = 0, maxPatch = 0;
+
+                const all = [...ovsxVersions, pkg.version];
+                for (const v of all) {
+                  const [maj, min, pat] = v.split(".").map(Number);
+                  if (maj > maxMajor || (maj === maxMajor && min > maxMinor) || (maj === maxMajor && min === maxMinor && pat > maxPatch)) {
+                    maxMajor = maj; maxMinor = min; maxPatch = pat;
+                  }
+                }
+
+                const nextVersion = `${maxMajor}.${maxMinor}.${maxPatch + 1}`;
+                pkg.version = nextVersion;
+                fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n");
+                console.log(`Auto-incremented marketplace extension version: ${nextVersion}`);
+
+                fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${nextVersion}\n`);
+                fs.appendFileSync(process.env.GITHUB_OUTPUT, `tag=v0.1.0\n`);
+              });
+            }).on("error", () => {
+              const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+              const [maj, min, pat] = pkg.version.split(".").map(Number);
+              const nextVersion = `${maj}.${min}.${pat + 1}`;
+              pkg.version = nextVersion;
+              fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n");
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${nextVersion}\n`);
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, `tag=v0.1.0\n`);
+            });
+          '
 
       - name: 📦 Package Extension VSIX
         run: npx vsce package --allow-missing-repository
@@ -101,3 +137,12 @@ jobs:
         run: |
           echo "Publishing to Open VSX Registry..."
           npx ovsx publish *.vsix -p ${{ env.OVSX_PAT }} || echo "⚠️ Open VSX: upload skipped or version already published."
+
+      - name: 💾 Commit Auto-Incremented Version to Git
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore(release): auto-bump extension version to ${{ steps.version_info.outputs.version }} [skip ci]" || true
+          git push origin main || true
