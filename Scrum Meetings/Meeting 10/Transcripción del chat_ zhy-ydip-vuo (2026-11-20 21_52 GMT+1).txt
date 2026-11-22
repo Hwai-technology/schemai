@@ -1,0 +1,20 @@
+00:01:33.875,00:01:36.875
+Alexander Emil Tupaq Roldan Palomino: Here's what I did today:
+
+- Prepared H2 & Checked COORD: Verified the progress of COORD and its subtask COORD · Integración (En curso for final src/extension.ts integration and the v0.1.0 .vsix release)
+- Moved HITO 2 to en curso in ClickUp ahead of its 22/11 close date.
+- Updated P5 Page 4 (KPI 4 — Cumplimiento de hitos):
+	- Filled in the Sprint 1 results table (H0: 7 days delay / Red
+	- H1: 0 days delay / Green
+	- H2: In progress for 22/11), added the global compliance calculation (33,3 % current / 66,7 % ≈ 67 % Ámbar projected at sprint close)
+	- Moved MET — Cumplimiento de hitos to en revisión for Yunus (rev-yunus).
+- Checked Day 10 Review (QA·T3, Leon): Verified on GitHub and ClickUp that QA·T3 is still in sprint backlog with no branch or PR opened yet, so it is pending Leon's PR submission.
+
+00:01:40.197,00:01:43.197
+Leon Skalczyński: reviewed PRs assigned to me
+i did QA-T3, need to commit it and create PR
+and I'm also doing the MET task after this meeting
+
+00:01:51.836,00:01:54.836
+Leon Skalczyński: yep
+
