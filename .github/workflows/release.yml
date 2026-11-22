@@ -41,16 +41,15 @@ jobs:
       - name: 🧪 Execute Unit Tests
         run: npm test
 
-      - name: 🏷️ Determine Release Version
+      - name: 🏷️ Determine Release & Marketplace Versions
         id: version_info
         run: |
           PKG_VERSION=$(node -p "require('./package.json').version")
-          echo "Extension Package Version: $PKG_VERSION"
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=v$PKG_VERSION" >> $GITHUB_OUTPUT
-          fi
+          echo "Extension Marketplace Version: $PKG_VERSION"
+          # Release tag on GitHub is always kept at v0.1.0 (Sprint 1)
+          RELEASE_TAG="v0.1.0"
+          echo "GitHub Release Tag: $RELEASE_TAG"
+          echo "tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
           echo "version=$PKG_VERSION" >> $GITHUB_OUTPUT
 
       - name: 📦 Package Extension VSIX
@@ -84,6 +83,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.version_info.outputs.tag }}
+          name: "SchemAI v0.1.0 — Release (Sprint 1)"
           files: '*.vsix'
           body_path: release_body.md
           generate_release_notes: false

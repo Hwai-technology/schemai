@@ -24,10 +24,13 @@ if [ -n "$(git status --porcelain)" ]; then
     git commit -m "chore: save working changes before release" || true
 fi
 
-# 2. Bump version using npm (updates package.json & creates a git tag)
-echo "📦 Updating version number ($RELEASE_TYPE)..."
-NEW_VERSION=$(npm version $RELEASE_TYPE -m "release: v%s")
-echo "📌 New Version: $NEW_VERSION"
+# 2. Bump extension version for marketplace publishing without changing the v0.1.0 release tag
+echo "📦 Updating extension version for marketplace ($RELEASE_TYPE)..."
+NEW_VERSION=$(npm version $RELEASE_TYPE --no-git-tag-version)
+echo "📌 New Extension Marketplace Version: $NEW_VERSION"
+
+git add package.json package-lock.json
+git commit -m "chore(marketplace): bump extension version to $NEW_VERSION for marketplace publish" || true
 
 # 3. Package the extension into VSIX
 echo "🛠️ Packaging extension VSIX..."
@@ -42,8 +45,10 @@ else
     echo "   (GitHub Actions CI/CD will publish automatically if OVSX_PAT secret is configured on GitHub)."
 fi
 
-# 5. Push code & tags to GitHub
-echo "⬆️ Pushing changes & tags to GitHub (origin main --tags)..."
-git push origin main --tags
+# 5. Push code & ensure v0.1.0 release tag is pushed to GitHub
+echo "⬆️ Pushing changes to GitHub (origin main) with v0.1.0 release tag..."
+git tag -f -a v0.1.0 -m "release: v0.1.0 (Sprint 1)"
+git push origin main
+git push origin v0.1.0 --force
 
-echo "🎉 Release $NEW_VERSION completed and pushed successfully!"
+echo "🎉 Extension $NEW_VERSION packaged & v0.1.0 release pushed successfully!"
