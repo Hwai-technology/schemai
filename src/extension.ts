@@ -143,6 +143,11 @@ export function activate(context: vscode.ExtensionContext, customVscode?: typeof
               snippetPreview,
               latest.license || 'GPL-3.0'
             );
+            if (sidebarProvider) {
+              (sidebarProvider as any).currentExplanation = explanation;
+              sidebarProvider.updateView();
+              void vs.commands?.executeCommand?.('schemaAI.sidebarView.focus');
+            }
             void vs.window.showInformationMessage(
               `SchemAI AI Explanation [${explanation.provider}]:\n\n${explanation.text}`
             );
