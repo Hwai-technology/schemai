@@ -56,6 +56,19 @@ The extension autonomously monitors clipboard paste activity, analyzes source co
 
 ## 4. Verification & Quality Gates
 
-- **Unit & Integration Tests:** 221 / 221 passing (`npm test`).
-- **Smoke Tests:** Fully verified activation and command registration (`schemaAI.analyzeSelection`, `schemaAI.analyzeFile`, `schemaAI.login`, `schemaAI.disconnect`, `schemaAI.ignoreAlert`).
+- **Unit & Integration Tests:** 226 / 226 passing (`npm test`).
+- **Smoke Tests:** Fully verified activation and command registration (`schemaAI.analyzeSelection`, `schemaAI.analyzeFile`, `schemaAI.login`, `schemaAI.disconnect`, `schemaAI.ignoreAlert`, `schemaAI.explainRiskWithAI`).
 - **Static Analysis:** ESLint 100% clean (`npm run lint` exit code 0).
+
+---
+
+## 5. Team Contributors (SchemAI Core Team)
+
+- **Ahmet Asaad Hammoud** ([@Eng-Ahmet](https://github.com/Eng-Ahmet)) — Coordinator, Module Contracts & Analysis Pipeline
+- **Abdul-rhman Hammoud** ([@Abdul-rhman-hammoud](https://github.com/Abdul-rhman-hammoud)) — Alerts, Editor Diagnostics & Decorators
+- **Alexander** — GitHub Code Search & Similarity Calculator
+- **David** — SPDX License Detector, Compatibility Matrix & Risk Engine
+- **Leon** — Configuration, Workspace License Detection & Policies
+- **Sergio** — AI / LLM Explainer & QuickFix Provider
+- **Yunus Emre Köroğlu** ([@yunusemrekoroglu](https://github.com/yunusemrekoroglu)) — Network Resilience, HTTP Client & Rate Limiting
+- **Yusuf** — GitHub Authentication, Secret Storage & Audit History

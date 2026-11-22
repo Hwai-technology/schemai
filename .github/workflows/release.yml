@@ -56,12 +56,37 @@ jobs:
       - name: 📦 Package Extension VSIX
         run: npx vsce package --allow-missing-repository
 
+      - name: 📝 Prepare Release Notes & Contributors
+        id: release_notes
+        run: |
+          cat << 'EOF' > release_body.md
+          ## 📦 SchemAI Extension Release
+
+          ### 👥 Team Contributors (SchemAI Core Team)
+          - **Ahmet Asaad Hammoud** ([@Eng-Ahmet](https://github.com/Eng-Ahmet)) — Coordinator, Module Contracts & Analysis Pipeline
+          - **Abdul-rhman Hammoud** ([@Abdul-rhman-hammoud](https://github.com/Abdul-rhman-hammoud)) — Alerts, Editor Diagnostics & Decorators
+          - **Alexander** — GitHub Code Search & Similarity Calculator
+          - **David** — SPDX License Detector, Compatibility Matrix & Risk Engine
+          - **Leon** — Configuration, Workspace License Detection & Policies
+          - **Sergio** — AI / LLM Explainer & QuickFix Provider
+          - **Yunus Emre Köroğlu** ([@yunusemrekoroglu](https://github.com/yunusemrekoroglu)) — Network Resilience, HTTP Client & Rate Limiting
+          - **Yusuf** — GitHub Authentication, Secret Storage & Audit History
+
+          ---
+
+          EOF
+
+          if [ -f RELEASE_NOTES.md ]; then
+            cat RELEASE_NOTES.md >> release_body.md
+          fi
+
       - name: 🚀 Create / Update GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.version_info.outputs.tag }}
           files: '*.vsix'
-          generate_release_notes: true
+          body_path: release_body.md
+          generate_release_notes: false
           draft: false
           prerelease: false
 
