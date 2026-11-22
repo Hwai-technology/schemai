@@ -50,8 +50,14 @@ jobs:
 
       - name: Publish to Visual Studio Marketplace
         if: env.VS_MARKETPLACE_PAT != '' && github.ref == 'refs/heads/main'
-        run: npx vsce publish -p ${{ env.VS_MARKETPLACE_PAT }}
+        continue-on-error: true
+        run: |
+          echo "Publishing to Visual Studio Marketplace..."
+          npx vsce publish -p ${{ env.VS_MARKETPLACE_PAT }} || echo "⚠️ VS Marketplace: upload skipped or version already published."
 
       - name: Publish to OpenVSX
         if: env.OVSX_PAT != '' && github.ref == 'refs/heads/main'
-        run: npx ovsx publish *.vsix -p ${{ env.OVSX_PAT }}
+        continue-on-error: true
+        run: |
+          echo "Publishing to Open VSX Registry..."
+          npx ovsx publish *.vsix -p ${{ env.OVSX_PAT }} || echo "⚠️ Open VSX: upload skipped or version already published."
