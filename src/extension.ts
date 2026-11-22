@@ -1,308 +1,211 @@
-import * as vscode from 'vscode';
-import { CodeAnalyzer } from './codeAnalyzer';
-import { SourceSearchEngine } from './sourceSearch';
-import { RiskEngine } from './riskEngine';
-import { AnalysisResult, ProjectPolicy, PasteAuditEntry } from './types';
-import { SecretStorageManager } from './security/secretStorage';
+import type * as vscode from 'vscode';
+import { register as registerDiagnosticsManager } from './alerts/diagnosticsManager';
+import { register as registerEditorDecorator } from './alerts/editorDecorator';
+import { register as registerHoverProvider } from './alerts/hoverProvider';
+import { register as registerRiskCardPanel } from './alerts/riskCardPanel';
+import { registerAnalysisCommands } from './analysis/commands';
+import { AnalysisQueue, createPasteAnalysisHandler } from './analysis/analysisQueue';
+import { CodeAnalyzer } from './analysis/codeAnalyzer';
+import { PasteMonitor } from './analysis/pasteMonitor';
 import { AuthManager } from './auth/authManager';
-import { AuthStatusBarItem } from './auth/authStatusBar';
-import { AnalysisQueue, QueuedAnalysisItem } from './monitoring/analysisQueue';
-import { PasteMonitor } from './monitoring/pasteMonitor';
+import { AuthStatusBar } from './auth/authStatusBar';
+import { registerAuthCommands } from './auth/commands';
+import { SettingsManager } from './config/settings';
+import { detectWorkspaceLicense } from './config/workspaceLicense';
 import { HistoryManager } from './history/historyManager';
-import { HistoryTreeProvider } from './history/historyTreeProvider';
-import { DiagnosticsManager } from './diagnostics/diagnosticsManager';
-import { EditorDecorator } from './diagnostics/editorDecorator';
-import { SchemAIHoverProvider } from './diagnostics/hoverProvider';
+import { HistoryStorage, HISTORY_STORAGE_KEY } from './history/historyStorage';
+import { SchemAIQuickFixProvider, IGNORE_ALERT_COMMAND } from './quickfix/codeActionProvider';
+import { SecretStorageService } from './security/secretStorage';
+import { TokenStore } from './security/tokens';
+import { HistoryTreeProvider } from './views/historyTreeProvider';
 import { SchemAISidebarViewProvider } from './views/sidebarViewProvider';
-import { RiskCardPanel } from './views/riskCardPanel';
 
-export async function activate(context: vscode.ExtensionContext) {
-  console.log('SchemAI extension activating...');
+/**
+ * Extension entry point activated when VS Code starts up.
+ * Coordinates feature registration and module lifecycle wiring.
+ */
+export function activate(context: vscode.ExtensionContext, customVscode?: typeof vscode): void {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const vs = customVscode ?? (require('vscode') as typeof vscode);
 
-  // 1. Initialize Security & Credentials (HU-03)
-  const secretStorageManager = SecretStorageManager.initialize(context.secrets);
-  await secretStorageManager.migrateLegacySettingsToken();
+  // 1. Alerts & Diagnostics UI
+  const diagnosticsManager = registerDiagnosticsManager(context);
+  registerEditorDecorator(context);
+  registerHoverProvider(context);
+  registerRiskCardPanel(context);
 
-  // 2. Initialize Authentication & Status Bar (HU-02)
-  const authManager = AuthManager.getInstance();
-  await authManager.initialize(context);
-  const authStatusBar = new AuthStatusBarItem(authManager);
-  context.subscriptions.push(authStatusBar);
-
-  // 3. Initialize History & Persistent Audit Storage (HU-16 GAP)
-  const historyManager = HistoryManager.initialize(context.workspaceState);
-  
-  // Register Interactive Cyberpunk Sidebar (SchemAI View Provider)
-  const sidebarProvider = new SchemAISidebarViewProvider(historyManager, context.extensionUri);
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(
-      SchemAISidebarViewProvider.viewType,
-      sidebarProvider
-    )
-  );
-
-  // Also support TreeDataProvider for compatibility
-  const historyTreeProvider = new HistoryTreeProvider(historyManager);
-  vscode.window.registerTreeDataProvider('schemaAI.auditHistoryView', historyTreeProvider);
-
-  // 4. Initialize Diagnostics, Decorations & Hover (HU-11 & HU-12)
-  const diagnosticsManager = new DiagnosticsManager();
-  diagnosticsManager.register(context);
-
-  const editorDecorator = new EditorDecorator();
-  editorDecorator.register(context);
-
-  const hoverProvider = new SchemAIHoverProvider(historyManager);
-  hoverProvider.register(context);
-
-  // 5. Initialize Async Non-Blocking Analysis Queue (HU-05)
-  const analysisQueue = AnalysisQueue.getInstance();
-  context.subscriptions.push(analysisQueue);
-
-  // Listen for completed analyses from the queue
-  analysisQueue.onAnalysisComplete(async ({ item, result }) => {
-    // Record into persistent history
-    const fileName = item.documentUri.path.split('/').pop() || 'Untitled';
-    const entry = await historyManager.recordAnalysis(
-      result,
-      fileName,
-      item.documentUri.fsPath,
-      item.text,
-      item.range
-        ? {
-            startLine: item.range.start.line,
-            endLine: item.range.end.line
-          }
-        : undefined
-    );
-
-    // Update Diagnostics
-    diagnosticsManager.updateDiagnostic(item.documentUri, item.range, result);
-
-    // Apply glowing border box & underline decorations in the editor
-    const activeEditor = vscode.window.activeTextEditor;
-    if (activeEditor && activeEditor.document.uri.toString() === item.documentUri.toString() && item.range) {
-      editorDecorator.applyDecoration(activeEditor, item.range, result);
-    }
-
-    // Reveal the Live Interactive Risk Card for manual analysis or user-initiated review
-    if (item.isManual && (result.riskLevel === 'FORBIDDEN' || result.riskLevel === 'HIGH')) {
-      RiskCardPanel.show(entry);
-    }
-
-    // Show Notification Alert for High / Medium risks or manual runs
-    if (
-      result.riskLevel === 'FORBIDDEN' ||
-      result.riskLevel === 'HIGH' ||
-      result.riskLevel === 'WARNING' ||
-      result.riskLevel === 'MEDIUM' ||
-      item.isManual
-    ) {
-      displayResultNotification(entry, result);
-    }
+  // 2. Authentication & Credential Security
+  const secretStorage = new SecretStorageService(context.secrets);
+  const settingsSection = vs.workspace?.getConfiguration
+    ? vs.workspace.getConfiguration('schemaAI')
+    : { get: () => undefined, update: async () => {} };
+  const tokenStore = new TokenStore(secretStorage, settingsSection);
+  tokenStore.migrateLegacyGitHubToken().catch(() => {
+    // Safe fallback if configuration migration fails
   });
 
-  // 6. Register Paste Event Monitor (HU-05)
-  const pasteMonitor = new PasteMonitor(analysisQueue);
-  pasteMonitor.register(context);
+  const authManager = new AuthManager({
+    authentication: vs.authentication,
+    window: vs.window
+  });
+  const statusBarAlignment = vs.StatusBarAlignment?.Right ?? 2;
+  const statusItem = vs.window.createStatusBarItem(statusBarAlignment, 100);
+  const authStatusBar = new AuthStatusBar(statusItem, authManager, vs.authentication);
+  context.subscriptions.push(authStatusBar);
 
-  // 7. Register Commands (HU-02, HU-06, HU-12, HU-13)
-  registerCommands(context, authManager, authStatusBar, historyManager, analysisQueue);
+  const authDisposables = registerAuthCommands(vs.commands, authManager);
+  context.subscriptions.push(...authDisposables);
 
-  // If user is not authenticated on startup, suggest connection gently
-  if (!authManager.isAuthenticated()) {
-    setTimeout(async () => {
-      if (!authManager.isAuthenticated()) {
-        const choice = await vscode.window.showInformationMessage(
-          'SchemAI: Connect your personal GitHub account to enable real-time license tracking without rate limits.',
-          'Connect GitHub',
-          'Later'
-        );
-        if (choice === 'Connect GitHub') {
-          await authManager.login();
+  if (vs.commands?.registerCommand) {
+    context.subscriptions.push(
+      vs.commands.registerCommand('schemaAI.manageAccount', async () => {
+        const session = await authManager.getCurrentSession();
+        if (session) {
+          const userLabel = session.account?.label || 'GitHub User';
+          const action = await vs.window.showInformationMessage(
+            `Signed in as GitHub user: ${userLabel}`,
+            'Sign Out'
+          );
+          if (action === 'Sign Out') {
+            authManager.signOut();
+          }
+        } else {
+          await authManager.signIn();
         }
-      }
-    }, 4000);
-  }
-
-  console.log('SchemAI extension activated successfully.');
-}
-
-function registerCommands(
-  context: vscode.ExtensionContext,
-  authManager: AuthManager,
-  authStatusBar: AuthStatusBarItem,
-  historyManager: HistoryManager,
-  analysisQueue: AnalysisQueue
-) {
-  // Command: Manual Analysis of Selected Code (HU-06)
-  context.subscriptions.push(
-    vscode.commands.registerCommand('schemaAI.analyzeSelection', async () => {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showInformationMessage('SchemAI: No active editor found.');
-        return;
-      }
-
-      const selectionText = editor.document.getText(editor.selection);
-      if (!selectionText || selectionText.trim().length === 0) {
-        vscode.window.showInformationMessage('SchemAI: Please select some code to analyze.');
-        return;
-      }
-
-      // Check session warning
-      await authManager.warnIfNoSessionBeforeAnalysis();
-
-      const fingerprint = CodeAnalyzer.generateFingerprint(selectionText);
-      const hash = CodeAnalyzer.generateHash(fingerprint);
-
-      const item: QueuedAnalysisItem = {
-        id: `manual_${Date.now()}`,
-        text: selectionText,
-        fingerprint,
-        fingerprintHash: hash,
-        languageId: editor.document.languageId,
-        documentUri: editor.document.uri,
-        range: editor.selection,
-        isManual: true
-      };
-
-      analysisQueue.enqueue(item, true);
-    })
-  );
-
-  // Command: Check Last Pasted Code Risk (User Request / Context Menu)
-  context.subscriptions.push(
-    vscode.commands.registerCommand('schemaAI.checkLastPasted', async () => {
-      const lastEntry = historyManager.getLastEntry();
-      if (!lastEntry) {
-        vscode.window.showInformationMessage('SchemAI: No previous pasted code analyses recorded yet.');
-        return;
-      }
-
-      RiskCardPanel.show(lastEntry);
-    })
-  );
-
-  // Command: Show Paste Audit Log / History (User Request / Context Menu)
-  context.subscriptions.push(
-    vscode.commands.registerCommand('schemaAI.showAuditLog', async () => {
-      const history = historyManager.getHistory();
-      if (history.length === 0) {
-        vscode.window.showInformationMessage('SchemAI: Audit log is empty. No code snippets analyzed yet.');
-        return;
-      }
-
-      const quickPickItems = history.map(entry => {
-        let icon = '$(check)';
-        if (entry.riskLevel === 'FORBIDDEN' || entry.riskLevel === 'HIGH') icon = '$(error)';
-        else if (entry.riskLevel === 'WARNING' || entry.riskLevel === 'MEDIUM') icon = '$(warning)';
-        else if (entry.riskLevel === 'UNKNOWN') icon = '$(question)';
-
-        return {
-          label: `${icon} [${entry.sourceMatch?.license || 'UNKNOWN'}] ${entry.fileName}`,
-          description: `${new Date(entry.timestamp).toLocaleTimeString()} · ${entry.riskLevel}`,
-          detail: `Repo: ${entry.sourceMatch?.repository || 'External'} | ${entry.reason}`,
-          entry
-        };
-      });
-
-      const selected = await vscode.window.showQuickPick(quickPickItems, {
-        placeHolder: 'SchemAI Audit Log: Select an entry to view full license details'
-      });
-
-      if (selected) {
-        RiskCardPanel.show(selected.entry);
-      }
-    })
-  );
-
-  // Command: Show Single Audit Detail (HU-12)
-  context.subscriptions.push(
-    vscode.commands.registerCommand('schemaAI.showAuditDetail', (entry: PasteAuditEntry) => {
-      RiskCardPanel.show(entry);
-    })
-  );
-
-  // Command: Authentication Management (HU-02)
-  context.subscriptions.push(
-    vscode.commands.registerCommand('schemaAI.login', async () => {
-      await authManager.login();
-    }),
-    vscode.commands.registerCommand('schemaAI.manageAccount', async () => {
-      await authStatusBar.showAccountMenu();
-    }),
-    vscode.commands.registerCommand('schemaAI.disconnect', async () => {
-      await authManager.disconnect();
-    })
-  );
-
-  // Command: Clear Audit History
-  context.subscriptions.push(
-    vscode.commands.registerCommand('schemaAI.clearHistory', async () => {
-      const confirm = await vscode.window.showWarningMessage(
-        'Are you sure you want to clear the SchemAI audit history for this workspace?',
-        'Clear History',
-        'Cancel'
-      );
-      if (confirm === 'Clear History') {
-        await historyManager.clearHistory();
-        vscode.window.showInformationMessage('SchemAI: Workspace audit history cleared.');
-      }
-    })
-  );
-
-  // Command: Mark False Positive (HU-13)
-  context.subscriptions.push(
-    vscode.commands.registerCommand('schemaAI.markFalsePositive', async (item?: any) => {
-      const entryId = item?.entry?.id || historyManager.getLastEntry()?.id;
-      if (!entryId) return;
-
-      const notes = await vscode.window.showInputBox({
-        prompt: 'Optional: Enter notes for marking as false positive',
-        placeHolder: 'e.g., Code was written in-house / authorized exception'
-      });
-
-      await historyManager.markFalsePositive(entryId, notes);
-      vscode.window.showInformationMessage('SchemAI: Marked alert as False Positive.');
-    })
-  );
-}
-
-function displayResultNotification(
-  entry: PasteAuditEntry,
-  result: AnalysisResult
-) {
-  const message = `[SchemAI] ${result.riskLevel}: ${result.reason}`;
-
-  if (result.riskLevel === 'FORBIDDEN' || result.riskLevel === 'HIGH') {
-    vscode.window
-      .showErrorMessage(message, 'View Details', 'Open Source', 'Mark Reviewed')
-      .then(selection => {
-        handleNotificationAction(selection, entry);
-      });
-  } else if (result.riskLevel === 'WARNING' || result.riskLevel === 'MEDIUM' || result.riskLevel === 'UNKNOWN') {
-    vscode.window
-      .showWarningMessage(message, 'View Details', 'Open Source', 'Mark Reviewed')
-      .then(selection => {
-        handleNotificationAction(selection, entry);
-      });
-  } else {
-    vscode.window.showInformationMessage(
-      `[SchemAI] SAFE: Code appears compatible with project policy (${result.projectPolicy}).`
+      })
     );
   }
-}
 
-function handleNotificationAction(selection: string | undefined, entry: PasteAuditEntry) {
-  if (selection === 'View Details') {
-    RiskCardPanel.show(entry);
-  } else if (selection === 'Open Source' && entry.sourceMatch?.url) {
-    vscode.env.openExternal(vscode.Uri.parse(entry.sourceMatch.url));
-  } else if (selection === 'Mark Reviewed') {
-    HistoryManager.getInstance().markReviewed(entry.id);
-    vscode.window.showInformationMessage('SchemAI: Alert marked as Reviewed.');
+  // 3. History Management & Sidebar Views
+  const historyStorage = new HistoryStorage(context.workspaceState);
+  const historyManager = new HistoryManager(historyStorage, diagnosticsManager);
+
+  if (vs.window?.registerWebviewViewProvider) {
+    const sidebarProvider = new SchemAISidebarViewProvider(historyManager, context.extensionUri);
+    context.subscriptions.push(
+      vs.window.registerWebviewViewProvider(SchemAISidebarViewProvider.viewType, sidebarProvider)
+    );
+  }
+
+  if (vs.window?.registerTreeDataProvider) {
+    const historyTreeProvider = new HistoryTreeProvider(historyManager);
+    context.subscriptions.push(
+      vs.window.registerTreeDataProvider('schemaAI.auditHistoryView', historyTreeProvider)
+    );
+  }
+
+  if (vs.commands?.registerCommand) {
+    context.subscriptions.push(
+      vs.commands.registerCommand('schemaAI.showAuditLog', async () => {
+        const records = historyManager.getRecords();
+        if (records.length === 0) {
+          void vs.window.showInformationMessage('SchemAI: No paste or license history recorded yet.');
+        } else {
+          void vs.window.showInformationMessage(`SchemAI: ${records.length} audit records in history.`);
+        }
+      }),
+      vs.commands.registerCommand('schemaAI.clearHistory', async () => {
+        await context.workspaceState.update(HISTORY_STORAGE_KEY, []);
+        void vs.window.showInformationMessage('SchemAI: Audit history cleared.');
+      }),
+      vs.commands.registerCommand('schemaAI.markFalsePositive', async (item?: { entry?: { id: string } }) => {
+        if (item?.entry?.id) {
+          await historyManager.markFalsePositive(item.entry.id);
+          void vs.window.showInformationMessage('SchemAI: Alert marked as false positive.');
+        }
+      })
+    );
+  }
+
+  // 4. QuickFix Provider and Ignore Command
+  const quickFixProvider = new SchemAIQuickFixProvider(vs as any, diagnosticsManager);
+  quickFixProvider.register(context);
+
+  const ignoreAlertDisposable = vs.commands.registerCommand(
+    IGNORE_ALERT_COMMAND,
+    async (uri: vscode.Uri, range: vscode.Range) => {
+      const alert = diagnosticsManager.findAlert(uri, range);
+      if (alert) {
+        const record = await historyManager.record(alert);
+        await historyManager.markFalsePositive(record.id);
+      } else {
+        diagnosticsManager.clear(uri);
+      }
+    }
+  );
+  context.subscriptions.push(ignoreAlertDisposable);
+
+  // 5. Code Analysis & Paste Monitoring
+  const queue = AnalysisQueue.getInstance();
+  const pasteHandler = createPasteAnalysisHandler(queue, (text) => CodeAnalyzer.generateFingerprint(text));
+
+  const isAutoAnalyze = () => {
+    if (!vs.workspace?.getConfiguration) {
+      return true;
+    }
+    const cfg = vs.workspace.getConfiguration('schemaAI');
+    return SettingsManager.isAutoAnalyzeEnabled(cfg);
+  };
+
+  const pasteMonitor = new PasteMonitor(
+    vs.env.clipboard,
+    pasteHandler,
+    isAutoAnalyze
+  );
+  pasteMonitor.register(context, vs.workspace);
+
+  const analysisDisposables = registerAnalysisCommands(
+    vs.commands,
+    vs.window,
+    (text, metadata) => {
+      const fingerprint = CodeAnalyzer.generateFingerprint(text);
+      queue.enqueue({
+        id: `manual-${Date.now()}`,
+        text,
+        fingerprint,
+        fingerprintHash: fingerprint,
+        languageId: metadata?.languageId,
+        documentUri: metadata?.uri,
+        isManual: true
+      });
+    },
+    vs.workspace
+  );
+  context.subscriptions.push(...analysisDisposables);
+
+  if (vs.commands?.registerCommand) {
+    context.subscriptions.push(
+      vs.commands.registerCommand('schemaAI.checkLastPasted', async () => {
+        const text = await vs.env.clipboard.readText();
+        if (!text || text.trim().length === 0) {
+          void vs.window.showInformationMessage('SchemAI: Clipboard is empty.');
+          return;
+        }
+        const fingerprint = CodeAnalyzer.generateFingerprint(text);
+        queue.enqueue({
+          id: `clipboard-${Date.now()}`,
+          text,
+          fingerprint,
+          fingerprintHash: fingerprint,
+          isManual: true
+        });
+        void vs.window.showInformationMessage('SchemAI: Clipboard content submitted for risk analysis.');
+      })
+    );
+  }
+
+  // 6. Workspace License Detection
+  if (vs.workspace?.workspaceFolders && vs.workspace.workspaceFolders.length > 0) {
+    detectWorkspaceLicense().catch(() => {
+      // Non-blocking background detection
+    });
   }
 }
 
-export function deactivate() {}
+/**
+ * Extension deactivation lifecycle hook.
+ * Handles cleanup of resources when the extension is deactivated.
+ */
+export function deactivate(): void {
+  AnalysisQueue.getInstance().dispose();
+}

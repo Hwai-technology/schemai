@@ -8,3 +8,12 @@ node_modules/**
 .env
 release.ps1
 release.sh
+.team-work/**
+Scrum Meetings/**
+src/test/**
+out/test/**
+*.tsbuildinfo
+.eslintrc.json
+.eslintignore
+.editorconfig
+.prettier*

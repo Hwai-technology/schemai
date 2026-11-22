@@ -2,9 +2,9 @@
   "name": "schema-ai",
   "displayName": "SchemAI - External Code & License Risk Analyzer",
   "description": "Smart extension to detect external code, search sources (GitHub), evaluate license compatibility, and assess risks on paste.",
-  "version": "2.0.0",
-  "license": "MIT",
+  "version": "2.1.0",
   "publisher": "schemai-team",
+  "license": "MIT",
   "icon": "media/schema_ai_team_logo.jpg",
   "repository": {
     "type": "git",
@@ -14,8 +14,8 @@
     "vscode": "^1.75.0"
   },
   "categories": [
-    "Other",
-    "Linters"
+    "Linters",
+    "Other"
   ],
   "activationEvents": [
     "onLanguage:javascript",
@@ -29,38 +29,72 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "SchemAI",
+      "properties": {
+        "schemaAI.projectLicense": {
+          "type": "string",
+          "default": "MIT",
+          "description": "SPDX identifier of the project license used to evaluate external code compatibility."
+        },
+        "schemaAI.autoAnalyze": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically analyze code pasted into the editor. Disable to only analyze on demand."
+        },
+        "schemaAI.githubToken": {
+          "type": "string",
+          "default": "",
+          "markdownDeprecationMessage": "Deprecated. Sign in with GitHub or store secrets via SchemAI SecretStorage.",
+          "description": "Optional legacy GitHub Personal Access Token."
+        }
+      }
+    },
     "commands": [
       {
         "command": "schemaAI.analyzeSelection",
-        "title": "SchemAI: Analyze Selected Code"
+        "title": "Analyze Selection",
+        "category": "SchemAI"
+      },
+      {
+        "command": "schemaAI.analyzeFile",
+        "title": "Analyze File",
+        "category": "SchemAI"
       },
       {
         "command": "schemaAI.checkLastPasted",
-        "title": "SchemAI: Check Last Pasted Code Risk"
+        "title": "Check Last Pasted Code Risk",
+        "category": "SchemAI"
       },
       {
         "command": "schemaAI.showAuditLog",
-        "title": "SchemAI: View Paste & License History (Audit Log)"
+        "title": "View Paste & License History (Audit Log)",
+        "category": "SchemAI"
       },
       {
         "command": "schemaAI.login",
-        "title": "SchemAI: Sign in to GitHub"
+        "title": "Sign in to GitHub",
+        "category": "SchemAI"
       },
       {
         "command": "schemaAI.manageAccount",
-        "title": "SchemAI: Manage GitHub Account"
+        "title": "Manage GitHub Account",
+        "category": "SchemAI"
       },
       {
         "command": "schemaAI.disconnect",
-        "title": "SchemAI: Disconnect GitHub Account"
+        "title": "Sign out of GitHub",
+        "category": "SchemAI"
       },
       {
         "command": "schemaAI.clearHistory",
-        "title": "SchemAI: Clear Audit History"
+        "title": "Clear Audit History",
+        "category": "SchemAI"
       },
       {
         "command": "schemaAI.markFalsePositive",
-        "title": "SchemAI: Mark Alert as False Positive"
+        "title": "Mark Alert as False Positive",
+        "category": "SchemAI"
       }
     ],
     "menus": {
@@ -68,17 +102,53 @@
         {
           "command": "schemaAI.analyzeSelection",
           "when": "editorHasSelection",
-          "group": "1_modification@1"
+          "group": "schemaAI@1"
+        },
+        {
+          "command": "schemaAI.analyzeFile",
+          "when": "editorTextFocus",
+          "group": "schemaAI@2"
         },
         {
           "command": "schemaAI.checkLastPasted",
           "when": "editorTextFocus",
-          "group": "1_modification@2"
+          "group": "schemaAI@3"
         },
         {
           "command": "schemaAI.showAuditLog",
           "when": "editorTextFocus",
-          "group": "1_modification@3"
+          "group": "schemaAI@4"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "schemaAI.analyzeFile",
+          "when": "!explorerResourceIsFolder",
+          "group": "schemaAI@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "schemaAI.analyzeSelection",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "schemaAI.analyzeFile"
+        },
+        {
+          "command": "schemaAI.checkLastPasted"
+        },
+        {
+          "command": "schemaAI.showAuditLog"
+        },
+        {
+          "command": "schemaAI.login"
+        },
+        {
+          "command": "schemaAI.disconnect"
+        },
+        {
+          "command": "schemaAI.clearHistory"
         }
       ],
       "view/item/context": [
@@ -110,29 +180,15 @@
           "name": "Paste & Risk Tracker"
         }
       ]
-    },
-    "configuration": {
-      "title": "SchemAI Settings",
-      "properties": {
-        "schemaAI.projectLicense": {
-          "type": "string",
-          "default": "MIT",
-          "description": "The target license of your project for compatibility checking."
-        },
-        "schemaAI.githubToken": {
-          "type": "string",
-          "default": "",
-          "markdownDeprecationMessage": "Deprecated. Sign in with GitHub or store secrets via SchemAI SecretStorage.",
-          "description": "Optional legacy GitHub Personal Access Token."
-        }
-      }
     }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
-    "test": "npm run compile && mocha out/test/**/*.test.js",
+    "clean": "node -e \"require('fs').rmSync('out',{recursive:true,force:true})\"",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "npm run clean && npm run compile && mocha \"out/test/**/*.test.js\"",
     "package": "vsce package --allow-missing-repository",
     "release": "./release.sh minor",
     "release:patch": "./release.sh patch",
@@ -142,7 +198,10 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^16.18.126",
     "@types/vscode": "^1.75.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "@vscode/vsce": "^4.0.0",
+    "eslint": "^8.57.1",
     "mocha": "^10.8.2",
     "ovsx": "^1.2.0",
     "typescript": "^4.9.5"

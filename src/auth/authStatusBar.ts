@@ -1,94 +1,59 @@
-import * as vscode from 'vscode';
-import { AuthManager } from './authManager';
-import { AuthState } from '../types';
+import type * as vscode from 'vscode';
+import type { AuthManager } from './authManager';
+import { DISCONNECT_COMMAND, LOGIN_COMMAND } from './commands';
 
-export class AuthStatusBarItem {
-  private statusBarItem: vscode.StatusBarItem;
-  private authManager: AuthManager;
+/** The part of `vscode.StatusBarItem` used here, so tests can inject a fake. */
+export interface StatusBarItemLike {
+  text: string;
+  tooltip?: string | vscode.MarkdownString;
+  command?: string | vscode.Command;
+  show(): void;
+  dispose(): void;
+}
 
-  constructor(authManager: AuthManager) {
-    this.authManager = authManager;
-    this.statusBarItem = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Right,
-      100
-    );
-    this.statusBarItem.command = 'schemaAI.manageAccount';
+/** The part of `vscode.authentication` that reports session changes. */
+export interface SessionChangeSource {
+  onDidChangeSessions(listener: (e: { provider: { id: string } }) => unknown): { dispose(): unknown };
+}
 
-    // Subscribe to auth state updates
-    this.authManager.onAuthStateChanged((state: AuthState) => {
-      this.updateState(state);
-    });
+export const NOT_CONNECTED_TEXT = 'GitHub: not connected';
 
-    // Initial update
-    this.updateState({
-      isAuthenticated: this.authManager.isAuthenticated(),
-      user: this.authManager.getCurrentUser()
-    });
+/** Shows which GitHub account SchemAI uses (click to sign in / out), and keeps it up to date. */
+export class AuthStatusBar {
+  private readonly subscriptions: { dispose(): unknown }[];
 
-    this.statusBarItem.show();
+  constructor(
+    private readonly item: StatusBarItemLike,
+    private readonly authManager: Pick<AuthManager, 'getCurrentSession' | 'onDidChangeSession'>,
+    sessions: SessionChangeSource
+  ) {
+    this.subscriptions = [
+      sessions.onDidChangeSessions((e) => {
+        if (e.provider.id === 'github') {
+          void this.refresh();
+        }
+      }),
+      authManager.onDidChangeSession(() => void this.refresh())
+    ];
+    item.show();
   }
 
-  public updateState(state: AuthState): void {
-    if (state.isAuthenticated && state.user) {
-      this.statusBarItem.text = `$(github) SchemAI: @${state.user.login}`;
-      this.statusBarItem.tooltip = `SchemAI: Authenticated with GitHub as ${state.user.login}. Click to manage account.`;
-      this.statusBarItem.backgroundColor = undefined;
+  public async refresh(): Promise<void> {
+    const session = await this.authManager.getCurrentSession();
+    if (session) {
+      const account = session.account?.label ?? 'connected';
+      this.item.text = `GitHub: ${account}`;
+      this.item.tooltip = `SchemAI is using the GitHub account ${account}. Click to sign out.`;
+      this.item.command = DISCONNECT_COMMAND;
     } else {
-      this.statusBarItem.text = `$(github) SchemAI: Connect GitHub`;
-      this.statusBarItem.tooltip = `SchemAI: Click to connect your personal GitHub account to avoid rate limits.`;
-      this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
-    }
-  }
-
-  public async showAccountMenu(): Promise<void> {
-    if (this.authManager.isAuthenticated()) {
-      const user = this.authManager.getCurrentUser();
-      const selection = await vscode.window.showQuickPick(
-        [
-          {
-            label: `$(account) Connected as @${user?.login}`,
-            description: 'Active personal GitHub session',
-            action: 'noop'
-          },
-          {
-            label: '$(sync) Switch GitHub Account',
-            description: 'Sign in with a different account',
-            action: 'switch'
-          },
-          {
-            label: '$(sign-out) Disconnect from SchemAI',
-            description: 'Clear local session reference',
-            action: 'disconnect'
-          }
-        ],
-        { placeHolder: 'SchemAI GitHub Account Management' }
-      );
-
-      if (selection?.action === 'switch') {
-        await this.authManager.switchAccount();
-      } else if (selection?.action === 'disconnect') {
-        await this.authManager.disconnect();
-      }
-    } else {
-      const selection = await vscode.window.showQuickPick(
-        [
-          {
-            label: '$(sign-in) Sign in with GitHub',
-            description: 'Connect personal GitHub account to avoid API rate limits',
-            action: 'login'
-          }
-        ],
-        { placeHolder: 'SchemAI GitHub Authentication' }
-      );
-
-      if (selection?.action === 'login') {
-        await this.authManager.login();
-      }
+      this.item.text = NOT_CONNECTED_TEXT;
+      this.item.tooltip = 'SchemAI is not connected to GitHub. Click to sign in.';
+      this.item.command = LOGIN_COMMAND;
     }
   }
 
   public dispose(): void {
-    this.statusBarItem.dispose();
+    this.subscriptions.forEach((s) => s.dispose());
+    this.item.dispose();
   }
 }
-

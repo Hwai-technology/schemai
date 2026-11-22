@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0] - 2026-11-20 (Sprint 1 Clean Architecture & Integration)
+
+### Added
+- **Full Clean Modular Architecture (12 Domain Modules):**
+  - `src/alerts`: DiagnosticsManager, EditorDecorator, HoverProvider, and secure CSP RiskCardPanel.
+  - `src/analysis`: CodeAnalyzer, AnalysisQueue, PasteMonitor, and Manual Analysis commands.
+  - `src/auth`: GitHub AuthManager, AuthStatusBar, and account command handlers.
+  - `src/config`: ConfigManager, SettingsManager, SPDX parser, and WorkspaceLicense detection.
+  - `src/core`: Common contracts, coordinator, and lifecycle smoke testing harness.
+  - `src/history`: HistoryManager, HistoryStorage (Memento persistence), and reactive change events.
+  - `src/licenses`: CompatibilityMatrix, LicenseDetector, and RiskEngine.
+  - `src/llm`: FixedSummaries, LLMClient, and multilingual Explanation Prompts (EN/ES).
+  - `src/network`: HttpClient, RateLimitHandler, and exponential backoff retry.
+  - `src/quickfix`: SchemAIQuickFixProvider with automated attribution insertion and false positive ignore command.
+  - `src/search`: Similarity calculation, query optimization, and token matching.
+  - `src/security`: SecretStorageService, TokenStore, and zero-token-leak validation.
+- **Automated Test Suite Expansion:** 221 comprehensive unit, integration, and smoke tests (100% passing).
+- **ESLint & Strict Code Quality:** Enforced `@typescript-eslint` across all modules with 0 errors.
+- **Sidebar & ActivityBar UI Integration:** Reactive Cyberpunk Dashboard (`SchemAISidebarViewProvider`) and Paste & Risk Tracker (`HistoryTreeProvider`).
+- **Packaging & Release Optimization:** Updated `.vscodeignore` to exclude development assets and media while retaining production branding.
+
+---
+
 ## [0.1.0] - 2026-11-05
 
 ### Added

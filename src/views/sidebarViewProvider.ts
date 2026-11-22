@@ -1,17 +1,24 @@
 import * as vscode from 'vscode';
-import { HistoryManager } from '../history/historyManager';
-import { PasteAuditEntry } from '../types';
+import type { HistoryManager } from '../history/historyManager';
+import type { IAuditRecord } from '../history/historyStorage';
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'schemaAI.sidebarView';
   private _view?: vscode.WebviewView;
-  private historyManager: HistoryManager;
-  private extensionUri?: vscode.Uri;
 
-  constructor(historyManager: HistoryManager, extensionUri?: vscode.Uri) {
-    this.historyManager = historyManager;
-    this.extensionUri = extensionUri;
-
+  constructor(
+    private readonly historyManager: HistoryManager,
+    private readonly extensionUri?: vscode.Uri
+  ) {
     this.historyManager.onHistoryChanged(() => {
       this.updateView();
     });
@@ -31,18 +38,20 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this.getHtmlContent();
 
-    // Listen to messages from the webview
-    webviewView.webview.onDidReceiveMessage(async (data) => {
+    webviewView.webview.onDidReceiveMessage((data: { command?: string; id?: string }) => {
       if (data.command === 'openSettings') {
-        vscode.commands.executeCommand('workbench.action.openSettings', 'schemaAI');
-      } else if (data.command === 'openEntry' && data.id) {
-        const history = this.historyManager.getHistory();
-        const entry = history.find(e => e.id === data.id);
-        if (entry) {
-          vscode.commands.executeCommand('schemaAI.showAuditDetail', entry);
-        }
+        void vscode.commands.executeCommand('workbench.action.openSettings', 'schemaAI');
       } else if (data.command === 'analyzeSelection') {
-        vscode.commands.executeCommand('schemaAI.analyzeSelection');
+        void vscode.commands.executeCommand('schemaAI.analyzeSelection');
+      } else if (data.command === 'checkLastPasted') {
+        void vscode.commands.executeCommand('schemaAI.checkLastPasted');
+      } else if (data.command === 'openEntry' && data.id) {
+        const history = this.historyManager.getRecords();
+        const entry = history.find((e) => e.id === data.id);
+        if (entry) {
+          const detail = `License: ${entry.license || 'Unknown'} | Risk: ${entry.riskLevel}\nSource: ${entry.sourceUrl || 'N/A'}\nReason: ${entry.reason}`;
+          void vscode.window.showInformationMessage(`SchemAI Audit [${entry.id}]: ${detail}`);
+        }
       }
     });
   }
@@ -54,25 +63,34 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
   }
 
   private getHtmlContent(): string {
-    const history = this.historyManager.getHistory();
-    const lastEntry = history.length > 0 ? history[0] : undefined;
+    const history = this.historyManager.getRecords();
+    const lastEntry: IAuditRecord | undefined = history.length > 0 ? history[history.length - 1] : undefined;
 
-    // Statistics
     const highCount = history.filter(
-      e => e.riskLevel === 'FORBIDDEN' || e.riskLevel === 'HIGH'
+      (e) =>
+        e.riskLevel === 'critical' ||
+        e.riskLevel === 'high' ||
+        e.riskLevel === 'CRITICAL' ||
+        e.riskLevel === 'HIGH' ||
+        e.riskLevel === 'FORBIDDEN'
     ).length;
     const safeCount = history.filter(
-      e => e.riskLevel === 'SAFE' || e.riskLevel === 'LOW'
+      (e) => e.riskLevel === 'low' || e.riskLevel === 'LOW' || e.riskLevel === 'SAFE'
     ).length;
     const warningCount = history.filter(
-      e => e.riskLevel === 'WARNING' || e.riskLevel === 'MEDIUM' || e.riskLevel === 'UNKNOWN'
+      (e) =>
+        e.riskLevel === 'medium' ||
+        e.riskLevel === 'MEDIUM' ||
+        e.riskLevel === 'warning' ||
+        e.riskLevel === 'WARNING'
     ).length;
 
-    const recentDetections = history.slice(0, 4);
+    const recentDetections = history.slice(-4).reverse();
 
-    const logoUri = this._view && this.extensionUri
-      ? this._view.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'schema_ai_team_logo.jpg'))
-      : '';
+    const logoUri =
+      this._view && this.extensionUri
+        ? this._view.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'schema_ai_team_logo.jpg'))
+        : '';
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -86,7 +104,6 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
       --text: #c9d1d9;
       --text-bright: #ffffff;
       --cyan-neon: #00d2ff;
-      --purple-neon: #9254de;
       --red-alert: #f85149;
       --green-safe: #3fb950;
     }
@@ -98,7 +115,6 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
       padding: 12px;
       font-size: 13px;
     }
-    /* Brand Header with New 1:1 Unified Logo */
     .brand-header {
       display: flex;
       align-items: center;
@@ -120,17 +136,12 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
       color: var(--text-bright);
       letter-spacing: -0.5px;
     }
-    /* Section Cards */
     .section-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 12px;
       margin-bottom: 12px;
-      transition: all 0.2s ease;
-    }
-    .section-card:hover {
-      border-color: #58a6ff;
     }
     .section-title {
       font-size: 11px;
@@ -158,8 +169,6 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
     }
     .dot-red { background: var(--red-alert); box-shadow: 0 0 8px var(--red-alert); }
     .dot-green { background: var(--green-safe); box-shadow: 0 0 8px var(--green-safe); }
-    
-    /* Detection Items */
     .item-row {
       display: flex;
       align-items: center;
@@ -179,7 +188,6 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
       gap: 8px;
       font-size: 12px;
     }
-    /* Stats Grid */
     .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -224,16 +232,14 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
   </style>
 </head>
 <body>
-  <!-- Brand Header -->
   <div class="brand-header">
     ${logoUri ? `<img src="${logoUri}" alt="SchemAI Logo" class="brand-logo-img" />` : '<div class="brand-logo-img" style="background:#00d2ff;"></div>'}
     <div class="brand-title">SchemAI</div>
   </div>
 
-  <!-- Current File Analysis -->
   <div class="section-card">
     <div class="section-title">
-      <span>Current File Analysis</span>
+      <span>Current Analysis Status</span>
       <span>${lastEntry ? '🟢' : '⚪'}</span>
     </div>
     <div class="status-badge">
@@ -242,7 +248,6 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
     </div>
   </div>
 
-  <!-- Recent Detections -->
   <div class="section-card">
     <div class="section-title">
       <span>Recent Detections</span>
@@ -252,11 +257,11 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
       recentDetections.length > 0
         ? recentDetections
             .map(
-              e => `
-        <div class="item-row" onclick="vscode.postMessage({ command: 'openEntry', id: '${e.id}' })">
+              (e) => `
+        <div class="item-row" onclick="vscode.postMessage({ command: 'openEntry', id: '${escapeHtml(e.id)}' })">
           <div class="item-info">
-            <span>${e.riskLevel === 'FORBIDDEN' || e.riskLevel === 'HIGH' ? '⚠️' : 'ℹ️'}</span>
-            <span style="font-weight: 600;">${e.sourceMatch?.license || 'Unknown'} · ${e.fileName}</span>
+            <span>${e.riskLevel === 'critical' || e.riskLevel === 'high' ? '⚠️' : 'ℹ️'}</span>
+            <span style="font-weight: 600;">${escapeHtml(e.license || 'Unknown')} · ${escapeHtml(e.filePath.split(/[/\\]/).pop() || 'File')}</span>
           </div>
           <span style="color: #8b949e;">&gt;</span>
         </div>`
@@ -266,7 +271,6 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
     }
   </div>
 
-  <!-- Configuration -->
   <div class="section-card">
     <div class="section-title">
       <span>Configuration</span>
@@ -278,7 +282,6 @@ export class SchemAISidebarViewProvider implements vscode.WebviewViewProvider {
     </button>
   </div>
 
-  <!-- Statistics -->
   <div class="section-card">
     <div class="section-title">
       <span>Statistics</span>

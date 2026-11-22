@@ -1,60 +1,48 @@
-import * as vscode from 'vscode';
-import { PasteAuditEntry } from '../types';
+/** Key under which the audit records are kept in `context.workspaceState`. */
+export const HISTORY_STORAGE_KEY = 'schemaAI.auditHistory';
 
-export class HistoryStorage {
-  private static readonly STORAGE_KEY = 'schemaAI.workspaceAuditHistory';
-  private static readonly MAX_ENTRIES = 150;
-  private workspaceState: vscode.Memento;
+export type ReviewStatus = 'PENDING' | 'REVIEWED' | 'FALSE_POSITIVE';
 
-  constructor(workspaceState: vscode.Memento) {
-    this.workspaceState = workspaceState;
-  }
-
-  /**
-   * Retrieves all stored audit entries from workspace state
-   */
-  public getEntries(): PasteAuditEntry[] {
-    const raw = this.workspaceState.get<PasteAuditEntry[]>(HistoryStorage.STORAGE_KEY);
-    return Array.isArray(raw) ? raw : [];
-  }
-
-  /**
-   * Saves an entry into the bounded circular buffer
-   */
-  public async addEntry(entry: PasteAuditEntry): Promise<void> {
-    const entries = this.getEntries();
-    // Prepend new entry so newest is first
-    entries.unshift(entry);
-
-    // Bound array to MAX_ENTRIES to prevent unbounded storage growth
-    if (entries.length > HistoryStorage.MAX_ENTRIES) {
-      entries.length = HistoryStorage.MAX_ENTRIES;
-    }
-
-    await this.workspaceState.update(HistoryStorage.STORAGE_KEY, entries);
-  }
-
-  /**
-   * Updates an existing entry (e.g. reviewStatus or reviewNotes)
-   */
-  public async updateEntry(
-    id: string,
-    updates: Partial<PasteAuditEntry>
-  ): Promise<boolean> {
-    const entries = this.getEntries();
-    const index = entries.findIndex(e => e.id === id);
-    if (index === -1) return false;
-
-    entries[index] = { ...entries[index], ...updates };
-    await this.workspaceState.update(HistoryStorage.STORAGE_KEY, entries);
-    return true;
-  }
-
-  /**
-   * Clears the entire workspace history
-   */
-  public async clear(): Promise<void> {
-    await this.workspaceState.update(HistoryStorage.STORAGE_KEY, []);
-  }
+/** One analysed alert in the audit history (README: `IAuditRecord`, plus its review status). */
+export interface IAuditRecord {
+  id: string;
+  timestamp: number;
+  filePath: string;
+  sourceUrl?: string;
+  license?: string;
+  riskLevel: string;
+  reason: string;
+  reviewStatus: ReviewStatus;
 }
 
+/** The part of `vscode.Memento` (`context.workspaceState`) used here, so tests can inject a fake. */
+export interface MementoLike {
+  get<T>(key: string): T | undefined;
+  update(key: string, value: unknown): Thenable<void>;
+}
+
+/** Persists the audit records in the workspace state, so they survive a window reload. */
+export class HistoryStorage {
+  constructor(private readonly memento: MementoLike) {}
+
+  public getAll(): IAuditRecord[] {
+    const stored = this.memento.get<IAuditRecord[]>(HISTORY_STORAGE_KEY);
+    return Array.isArray(stored) ? stored.map((record) => ({ ...record })) : [];
+  }
+
+  public async add(record: IAuditRecord): Promise<void> {
+    await this.memento.update(HISTORY_STORAGE_KEY, [...this.getAll(), record]);
+  }
+
+  /** Applies `changes` to the record with this id. Returns `false` (and writes nothing) if there is none. */
+  public async update(id: string, changes: Partial<Omit<IAuditRecord, 'id'>>): Promise<boolean> {
+    const records = this.getAll();
+    const index = records.findIndex((record) => record.id === id);
+    if (index === -1) {
+      return false;
+    }
+    records[index] = { ...records[index], ...changes };
+    await this.memento.update(HISTORY_STORAGE_KEY, records);
+    return true;
+  }
+}

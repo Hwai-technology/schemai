@@ -30,6 +30,9 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm install
 
+      - name: 🔍 Lint Source Code
+        run: npm run lint
+
       - name: 🛠️ Compile TypeScript
         run: npm run compile
 
@@ -38,4 +41,3 @@ jobs:
 
       - name: 📦 Validate VSIX Packaging
         run: npx vsce package --allow-missing-repository
-

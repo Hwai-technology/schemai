@@ -1,0 +1,3 @@
+00:01:59.478,00:02:02.478
+Leon Skalczyński: Did task HU-04-T2, commited, I still need to create a PR for Ahmet to review. Will do that soon
+
