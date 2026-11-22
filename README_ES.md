@@ -5,12 +5,18 @@
 
 ---
 
+[![Versión](https://img.shields.io/badge/Release-v0.1.0-blue?logo=github)](https://github.com/Hwai-technology/schemai/releases/tag/v0.1.0)
+[![CI Pipeline](https://github.com/Hwai-technology/schemai/actions/workflows/ci.yml/badge.svg)](https://github.com/Hwai-technology/schemai/actions)
+[![Pruebas](https://img.shields.io/badge/Tests-221%20passing-brightgreen?logo=mocha)](https://github.com/Hwai-technology/schemai)
+[![Licencia](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 ![SchemAI Team Logo & Banner](media/schema_ai_team_logo.jpg)
 
 ## 🧰 Stack Tecnológico y Compatibilidad
 
 | Componente / Especificación | Versión / Detalles | Estado |
 | :--- | :--- | :--- |
+| **Versión de la Extensión** | `0.1.0` (Sprint 1) | ![Version](https://img.shields.io/badge/Version-0.1.0-blue) |
 | **Motor de VS Code** | `^1.75.0+` | ![VS Code](https://img.shields.io/badge/VS_Code-1.75.0+-007ACC?logo=visualstudiocode) |
 | **Entorno de Ejecución** | Node.js `18.x` / `20.x` / `22.x` | ![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs) |
 | **Lenguaje y Compilador** | TypeScript `^4.9.5` | ![TypeScript](https://img.shields.io/badge/TypeScript-4.9.5-3178C6?logo=typescript) |
@@ -116,6 +122,22 @@ graph TD
         K --> O[HistoryManager - Registro en Workspace]
     end
 ```
+
+---
+
+### 3. Arquitectura Modular Limpia (12 Módulos de Dominio)
+* **`src/alerts/`**: Diagnósticos de errores y advertencias, decoraciones en el editor, tooltips hover y Risk Card interactiva con CSP seguro.
+* **`src/analysis/`**: Cola de análisis asíncrona no bloqueante (`AnalysisQueue`), huellas digitales de código (`CodeAnalyzer`) y `PasteMonitor`.
+* **`src/auth/`**: Autenticación oficial de GitHub en VS Code (`vscode.authentication`) e integración con la barra de estado.
+* **`src/config/`**: Gestión de configuración (`ConfigurationManager`), normalización SPDX y detección de licencia del workspace.
+* **`src/core/`**: Interfaces de contrato (`types.ts`), coordinador e integración con pruebas smoke del ciclo de vida.
+* **`src/history/`**: Historial de auditoría y almacenamiento persistente en el estado del espacio de trabajo (`workspaceState`).
+* **`src/licenses/`**: Matriz de compatibilidad legal, detector de licencias y motor de evaluación de riesgos (`RiskEngine`).
+* **`src/llm/`**: Prompts de explicación mediante IA (EN/ES), cliente LLM y resúmenes fijos de respaldo para licencias.
+* **`src/network/`**: Cliente HTTP con retroceso exponencial y gestión de cabeceras de límite de peticiones de GitHub.
+* **`src/quickfix/`**: `SchemAIQuickFixProvider` con inserción automática de atribución y comando para ignorar falsos positivos.
+* **`src/search/`**: Cálculo de similitud de tokens, optimización de consultas y búsqueda de código fuente en GitHub.
+* **`src/security/`**: Almacenamiento cifrado de credenciales (`SecretStorageService`) y prevención estricta de fuga de tokens.
 
 ---
 

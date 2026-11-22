@@ -5,12 +5,18 @@
 
 ---
 
+[![Release](https://img.shields.io/badge/Release-v0.1.0-blue?logo=github)](https://github.com/Hwai-technology/schemai/releases/tag/v0.1.0)
+[![CI Pipeline](https://github.com/Hwai-technology/schemai/actions/workflows/ci.yml/badge.svg)](https://github.com/Hwai-technology/schemai/actions)
+[![Tests Passing](https://img.shields.io/badge/Tests-221%20passing-brightgreen?logo=mocha)](https://github.com/Hwai-technology/schemai)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 ![SchemAI Team Logo & Banner](media/schema_ai_team_logo.jpg)
 
 ## 🧰 Technology Stack & Ecosystem Compatibility
 
 | Component / Spec | Version / Details | Status |
 | :--- | :--- | :--- |
+| **Extension Version** | `0.1.0` (Sprint 1) | ![Version](https://img.shields.io/badge/Version-0.1.0-blue) |
 | **VS Code Engine** | `^1.75.0+` | ![VS Code](https://img.shields.io/badge/VS_Code-1.75.0+-007ACC?logo=visualstudiocode) |
 | **Runtime Environment** | Node.js `18.x` / `20.x` / `22.x` | ![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs) |
 | **Language & Compiler** | TypeScript `^4.9.5` | ![TypeScript](https://img.shields.io/badge/TypeScript-4.9.5-3178C6?logo=typescript) |
@@ -116,6 +122,22 @@ graph TD
         K --> O[HistoryManager - Workspace Audit Storage]
     end
 ```
+
+---
+
+### 3. Modular Clean Architecture (12 Domain Modules)
+* **`src/alerts/`**: Diagnostic error/warning reporting, in-editor code decorations, hover tips, and secure CSP Risk Card.
+* **`src/analysis/`**: Non-blocking async `AnalysisQueue`, `CodeAnalyzer` fingerprinting, and `PasteMonitor`.
+* **`src/auth/`**: VS Code official GitHub Authentication (`vscode.authentication`) & status bar integration.
+* **`src/config/`**: `ConfigurationManager`, settings management, SPDX normalization, and workspace license detection.
+* **`src/core/`**: Contract interfaces (`types.ts`), coordinator, and lifecycle smoke testing harness.
+* **`src/history/`**: `HistoryManager` & `HistoryStorage` preserving audit logs in workspace state.
+* **`src/licenses/`**: `CompatibilityMatrix`, `LicenseDetector`, and evidence-based `RiskEngine`.
+* **`src/llm/`**: AI explanation prompts (EN/ES), LLM client, and fixed fallback license summaries.
+* **`src/network/`**: `HttpClient` with exponential backoff and GitHub rate limit header handling.
+* **`src/quickfix/`**: `SchemAIQuickFixProvider` with automated attribution and false positive ignore command.
+* **`src/search/`**: Token similarity calculator, query optimization, and GitHub source searching.
+* **`src/security/`**: `SecretStorageService` encrypted credential storage and zero-token-leak enforcement.
 
 ---
 

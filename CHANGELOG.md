@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.1.0] - 2026-11-20 (Sprint 1 Clean Architecture & Integration)
+## [0.1.0] - 2026-11-20 (Sprint 1 Clean Architecture & Integration)
 
 ### Added
 - **Full Clean Modular Architecture (12 Domain Modules):**

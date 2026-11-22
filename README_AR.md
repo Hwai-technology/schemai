@@ -5,12 +5,18 @@
 
 ---
 
+[![الإصدار](https://img.shields.io/badge/Release-v0.1.0-blue?logo=github)](https://github.com/Hwai-technology/schemai/releases/tag/v0.1.0)
+[![CI Pipeline](https://github.com/Hwai-technology/schemai/actions/workflows/ci.yml/badge.svg)](https://github.com/Hwai-technology/schemai/actions)
+[![الاختبارات](https://img.shields.io/badge/Tests-221%20passing-brightgreen?logo=mocha)](https://github.com/Hwai-technology/schemai)
+[![الترخيص](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 ![SchemAI Team Logo & Banner](media/schema_ai_team_logo.jpg)
 
 ## 🧰 الحزمة التقنية والتوافق البيئي
 
 | المكون / المواصفة | الإصدار / التفاصيل | الحالة |
 | :--- | :--- | :--- |
+| **إصدار الإضافة** | `0.1.0` (Sprint 1) | ![Version](https://img.shields.io/badge/Version-0.1.0-blue) |
 | **محرك VS Code** | `^1.75.0+` | ![VS Code](https://img.shields.io/badge/VS_Code-1.75.0+-007ACC?logo=visualstudiocode) |
 | **بيئة التشغيل** | Node.js `18.x` / `20.x` / `22.x` | ![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs) |
 | **لغة ومترجم المشروع** | TypeScript `^4.9.5` | ![TypeScript](https://img.shields.io/badge/TypeScript-4.9.5-3178C6?logo=typescript) |
@@ -116,6 +122,22 @@ graph TD
         K --> O[HistoryManager - سجل التدقيق في Workspace]
     end
 ```
+
+---
+
+### 3. البنية المعمارية النمطية (12 وحدة برمجية)
+* **`src/alerts/`**: إدارة التنبيهات والتشخيصات في المحرر، وإبراز الأكواد، وتلميحات Hover، وبطاقة المخاطر التفاعلية الآمنة (CSP).
+* **`src/analysis/`**: طابور التحليل غير المعطل للواجهة (`AnalysisQueue`)، وبصمة الأكواد (`CodeAnalyzer`)، ومراقب اللصق (`PasteMonitor`).
+* **`src/auth/`**: المصادقة الرسمية عبر حسابات GitHub الشخصية (`vscode.authentication`) وشريط الحالة.
+* **`src/config/`**: إدارة الإعدادات (`ConfigurationManager`)، وتوحيد معرفات SPDX، واكتشاف رخصة مجلد العمل.
+* **`src/core/`**: واجهات العقود البرمجية (`types.ts`)، ومنسق النظام، وحزمة اختبارات الدخان التكاملية.
+* **`src/history/`**: سجل التدقيق والتتبع التاريخي وحفظ السجلات في حالة مساحة العمل (`workspaceState`).
+* **`src/licenses/`**: مصفوفة التوافق القانوني، ومكتشف التراخيص، ومحرك تقييم المخاطر القائم على الأدلة (`RiskEngine`).
+* **`src/llm/`**: قوالب تفسير المخاطر بالذكاء الاصطناعي (بالعربية/الإنجليزية/الإسبانية)، وعميل LLM، والملخصات الثابتة البديلة.
+* **`src/network/`**: عميل HTTP المرن مع دعم التراجع الأسي ومعالجة حدود استهلاك واجهة GitHub (`RateLimitHandler`).
+* **`src/quickfix/`**: موفر الإصلاحات السريعة (`SchemAIQuickFixProvider`) لإدراج الإسناد وتجاهل الإنذارات غير الصحيحة.
+* **`src/search/`**: حساب نسبة التشابه وتحسين استعلامات البحث في مستودعات GitHub المفتوحة.
+* **`src/security/`**: التخزين المشفر للمفاتيح والرموز (`SecretStorageService`) ومنع تسريب أي توكنات برمجية.
 
 ---
 
