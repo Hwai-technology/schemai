@@ -18,14 +18,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:javascript",
-    "onLanguage:typescript",
-    "onLanguage:python",
-    "onLanguage:java",
-    "onLanguage:csharp",
-    "onLanguage:go",
-    "onLanguage:cpp",
-    "onLanguage:rust"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -155,9 +148,14 @@
           "group": "schemaAI@3"
         },
         {
-          "command": "schemaAI.showAuditLog",
+          "command": "schemaAI.explainRiskWithAI",
           "when": "editorTextFocus",
           "group": "schemaAI@4"
+        },
+        {
+          "command": "schemaAI.showAuditLog",
+          "when": "editorTextFocus",
+          "group": "schemaAI@5"
         }
       ],
       "explorer/context": [

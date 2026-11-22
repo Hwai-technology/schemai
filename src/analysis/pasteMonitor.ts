@@ -77,13 +77,19 @@ export class PasteMonitor {
     for (const change of event.contentChanges) {
       const insertedText = change.text;
 
-      // Ignore single-character typing or single-line insertions
-      if (insertedText.length <= 1 || !insertedText.includes('\n')) {
+      // Ignore single-character typing
+      if (insertedText.length <= 1) {
         continue;
       }
 
       const normalizedInserted = PasteMonitor.normalizeLineEndings(insertedText);
-      if (normalizedInserted !== normalizedClipboard) {
+      const isExactMatch = normalizedInserted === normalizedClipboard;
+      const isTrimmedMatch = normalizedInserted.trim() === normalizedClipboard.trim();
+      const isStrippedMatch =
+        PasteMonitor.stripIndentation(normalizedInserted) ===
+        PasteMonitor.stripIndentation(normalizedClipboard);
+
+      if (!isExactMatch && !isTrimmedMatch && !isStrippedMatch) {
         continue;
       }
 
@@ -98,6 +104,14 @@ export class PasteMonitor {
 
   private static normalizeLineEndings(text: string): string {
     return text.replace(/\r\n/g, '\n');
+  }
+
+  private static stripIndentation(text: string): string {
+    return text
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .join('\n');
   }
 }
 

@@ -25,7 +25,7 @@ export interface WindowLike {
 
 export type AnalysisHandler = (
   text: string,
-  metadata?: { languageId?: string; uri?: unknown }
+  metadata?: { languageId?: string; uri?: unknown; range?: unknown }
 ) => unknown;
 
 /** The part of `vscode.workspace` used to open the file clicked in the explorer. */
@@ -61,7 +61,8 @@ export function registerAnalysisCommands(
 
       return onAnalyze(text, {
         languageId: editor.document.languageId,
-        uri: editor.document.uri
+        uri: editor.document.uri,
+        range: editor.selection
       });
     }),
 

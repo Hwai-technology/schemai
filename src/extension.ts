@@ -1,10 +1,10 @@
 import type * as vscode from 'vscode';
-import { register as registerDiagnosticsManager } from './alerts/diagnosticsManager';
+import { register as registerDiagnosticsManager, AlertInput } from './alerts/diagnosticsManager';
 import { register as registerEditorDecorator } from './alerts/editorDecorator';
 import { register as registerHoverProvider } from './alerts/hoverProvider';
 import { register as registerRiskCardPanel } from './alerts/riskCardPanel';
 import { registerAnalysisCommands } from './analysis/commands';
-import { AnalysisQueue, createPasteAnalysisHandler } from './analysis/analysisQueue';
+import { AnalysisQueue, createPasteAnalysisHandler, QueuedAnalysisItem } from './analysis/analysisQueue';
 import { CodeAnalyzer } from './analysis/codeAnalyzer';
 import { PasteMonitor } from './analysis/pasteMonitor';
 import { AuthManager } from './auth/authManager';
@@ -14,10 +14,14 @@ import { SettingsManager } from './config/settings';
 import { detectWorkspaceLicense } from './config/workspaceLicense';
 import { HistoryManager } from './history/historyManager';
 import { HistoryStorage, HISTORY_STORAGE_KEY } from './history/historyStorage';
+import { CompatibilityMatrix } from './licenses/compatibilityMatrix';
+import { LicenseDetector } from './licenses/licenseDetector';
+import { RiskEngine } from './licenses/riskEngine';
 import { LLMService } from './llm/llmService';
 import { SchemAIQuickFixProvider, IGNORE_ALERT_COMMAND } from './quickfix/codeActionProvider';
 import { SecretStorageService } from './security/secretStorage';
 import { TokenStore } from './security/tokens';
+import type { RiskSeverity } from './types';
 import { HistoryTreeProvider } from './views/historyTreeProvider';
 import { SchemAISidebarViewProvider } from './views/sidebarViewProvider';
 
@@ -31,9 +35,9 @@ export function activate(context: vscode.ExtensionContext, customVscode?: typeof
 
   // 1. Alerts & Diagnostics UI
   const diagnosticsManager = registerDiagnosticsManager(context);
-  registerEditorDecorator(context);
-  registerHoverProvider(context);
-  registerRiskCardPanel(context);
+  const editorDecorator = registerEditorDecorator(context);
+  const hoverProvider = registerHoverProvider(context);
+  const riskCardPanel = registerRiskCardPanel(context);
 
   // 2. Authentication & Credential Security
   const secretStorage = new SecretStorageService(context.secrets);
@@ -82,8 +86,9 @@ export function activate(context: vscode.ExtensionContext, customVscode?: typeof
   const historyManager = new HistoryManager(historyStorage, diagnosticsManager);
   const llmService = new LLMService(secretStorage);
 
+  let sidebarProvider: SchemAISidebarViewProvider | undefined;
   if (vs.window?.registerWebviewViewProvider) {
-    const sidebarProvider = new SchemAISidebarViewProvider(
+    sidebarProvider = new SchemAISidebarViewProvider(
       historyManager,
       llmService,
       context.extensionUri
@@ -215,6 +220,136 @@ export function activate(context: vscode.ExtensionContext, customVscode?: typeof
 
   // 5. Code Analysis & Paste Monitoring
   const queue = AnalysisQueue.getInstance();
+
+  const analyzeAndReportItem = async (item: QueuedAnalysisItem): Promise<void> => {
+    if (!item.text || item.text.trim().length === 0) {
+      return;
+    }
+
+    const projectLicense =
+      (vs.workspace?.getConfiguration?.('schemaAI')?.get<string>('projectLicense')) || 'MIT';
+
+    const detected = LicenseDetector.detectEmbeddedNotice(item.text);
+
+    if (detected) {
+      const compatibility = CompatibilityMatrix.evaluate(detected.spdxId, projectLicense);
+      const riskAssessment = RiskEngine.evaluateRisk(
+        {
+          repository: detected.repository,
+          url: detected.url,
+          license: detected.spdxId,
+          similarity: detected.similarity / 100
+        },
+        {
+          projectLicense,
+          allowedLicenses: ['MIT', 'APACHE-2.0', 'BSD-2-CLAUSE', 'BSD-3-CLAUSE', 'ISC'],
+          restrictedLicenses: ['GPL-2.0', 'GPL-3.0', 'AGPL-1.0', 'AGPL-3.0', 'SSPL']
+        }
+      );
+
+      const severity: RiskSeverity =
+        riskAssessment.riskLevel === 'high'
+          ? 'high'
+          : compatibility.riskLevel === 'manual-review'
+          ? 'medium'
+          : 'low';
+
+      const uri =
+        (item.documentUri as vscode.Uri) ||
+        vs.window.activeTextEditor?.document.uri ||
+        vs.Uri?.file?.('/unknown');
+
+      let range = item.range as vscode.Range;
+      if (!range && vs.Range) {
+        if (
+          vs.window.activeTextEditor?.document.uri.toString() === uri?.toString() &&
+          vs.window.activeTextEditor.selection &&
+          !vs.window.activeTextEditor.selection.isEmpty
+        ) {
+          range = vs.window.activeTextEditor.selection;
+        } else {
+          const lineCount = Math.max(1, item.text.split('\n').length);
+          range = new vs.Range(0, 0, Math.min(lineCount, 5), 0);
+        }
+      }
+
+      if (uri && range) {
+        const alert: AlertInput = {
+          uri,
+          range,
+          severity,
+          license: detected.spdxId,
+          sourceRepo: detected.repository,
+          reason: riskAssessment.reason,
+          sourceUrl: detected.url,
+          similarity: detected.similarity / 100
+        };
+
+        if (severity !== 'low') {
+          diagnosticsManager.report(alert);
+
+          const activeEditor = vs.window.activeTextEditor;
+          if (activeEditor && activeEditor.document.uri.toString() === uri.toString()) {
+            editorDecorator.apply(activeEditor, [alert]);
+          }
+          hoverProvider.update(uri, [alert]);
+        }
+
+        const record = await historyManager.record(alert);
+        sidebarProvider?.updateView();
+
+        if (severity === 'high' || severity === 'medium') {
+          const selection = await vs.window.showWarningMessage(
+            `[SchemAI] ${severity.toUpperCase()} License Risk: ${detected.spdxId} detected! ${riskAssessment.reason}`,
+            '🤖 Explain with AI',
+            '👁️ View Risk Card',
+            '🛡️ Ignore Alert'
+          );
+
+          if (selection === '🤖 Explain with AI') {
+            void vs.commands.executeCommand('schemaAI.explainRiskWithAI');
+          } else if (selection === '👁️ View Risk Card') {
+            riskCardPanel.show(
+              {
+                license: { name: detected.spdxId, spdxId: detected.spdxId },
+                severity,
+                reason: riskAssessment.reason,
+                match: {
+                  repository: detected.repository,
+                  url: detected.url,
+                  path: '',
+                  similarity: detected.similarity / 100
+                }
+              },
+              {
+                text: item.text,
+                languageId: item.languageId || 'plaintext',
+                uri,
+                range
+              }
+            );
+          } else if (selection === '🛡️ Ignore Alert') {
+            await historyManager.markFalsePositive(record.id);
+            diagnosticsManager.clear(uri);
+            sidebarProvider?.updateView();
+          }
+        } else if (item.isManual) {
+          void vs.window.showInformationMessage(
+            `SchemAI: Code analyzed — ${detected.spdxId} is compatible with project license (${projectLicense}).`
+          );
+        }
+      }
+    } else if (item.isManual) {
+      void vs.window.showInformationMessage(
+        `SchemAI: Code analyzed — No restricted license notices detected. Code is compatible with project (${projectLicense}).`
+      );
+    }
+  };
+
+  queue.setWorker(async (item) => {
+    await analyzeAndReportItem(item);
+  });
+
   const pasteHandler = createPasteAnalysisHandler(queue, (text) => CodeAnalyzer.generateFingerprint(text));
 
   const isAutoAnalyze = () => {
@@ -237,15 +372,19 @@ export function activate(context: vscode.ExtensionContext, customVscode?: typeof
     vs.window,
     (text, metadata) => {
       const fingerprint = CodeAnalyzer.generateFingerprint(text);
-      queue.enqueue({
-        id: `manual-${Date.now()}`,
-        text,
-        fingerprint,
-        fingerprintHash: fingerprint,
-        languageId: metadata?.languageId,
-        documentUri: metadata?.uri,
-        isManual: true
-      });
+      queue.enqueue(
+        {
+          id: `manual-${Date.now()}`,
+          text,
+          fingerprint,
+          fingerprintHash: fingerprint,
+          languageId: metadata?.languageId,
+          documentUri: metadata?.uri,
+          range: metadata?.range,
+          isManual: true
+        },
+        true
+      );
     },
     vs.workspace
   );
@@ -260,14 +399,16 @@ export function activate(context: vscode.ExtensionContext, customVscode?: typeof
           return;
         }
         const fingerprint = CodeAnalyzer.generateFingerprint(text);
-        queue.enqueue({
-          id: `clipboard-${Date.now()}`,
-          text,
-          fingerprint,
-          fingerprintHash: fingerprint,
-          isManual: true
-        });
-        void vs.window.showInformationMessage('SchemAI: Clipboard content submitted for risk analysis.');
+        queue.enqueue(
+          {
+            id: `clipboard-${Date.now()}`,
+            text,
+            fingerprint,
+            fingerprintHash: fingerprint,
+            isManual: true
+          },
+          true
+        );
       })
     );
   }

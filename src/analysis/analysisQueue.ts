@@ -32,7 +32,7 @@ export type AnalysisCompleteListener = (event: AnalysisCompleteEvent) => void;
 export class AnalysisQueue {
   private static instance?: AnalysisQueue;
   private readonly debounceMs: number;
-  private readonly worker?: AnalysisWorker;
+  private worker?: AnalysisWorker;
   private readonly maxCacheSize: number;
 
   private queue: QueuedAnalysisItem[] = [];
@@ -47,11 +47,17 @@ export class AnalysisQueue {
     this.maxCacheSize = options?.maxCacheSize ?? 100;
   }
 
-  public static getInstance(): AnalysisQueue {
+  public static getInstance(options?: AnalysisQueueOptions): AnalysisQueue {
     if (!AnalysisQueue.instance) {
-      AnalysisQueue.instance = new AnalysisQueue();
+      AnalysisQueue.instance = new AnalysisQueue(options);
+    } else if (options?.worker) {
+      AnalysisQueue.instance.setWorker(options.worker);
     }
     return AnalysisQueue.instance;
+  }
+
+  public setWorker(worker: AnalysisWorker): void {
+    this.worker = worker;
   }
 
   public getDebounceMs(): number {

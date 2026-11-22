@@ -46,4 +46,18 @@ describe('LicenseDetector', () => {
 
     assert.strictEqual(result.spdxId, 'NONE');
   });
+
+  it('detects SPDX-License-Identifier tags in code comments', () => {
+    const text = '// SPDX-License-Identifier: GPL-3.0-or-later\nfunction compute() {}';
+    const result = LicenseDetector.detectEmbeddedNotice(text);
+    assert.ok(result);
+    assert.strictEqual(result.spdxId, 'GPL-3.0');
+  });
+
+  it('detects short license header comments', () => {
+    const text = '/* License: AGPL-3.0 */\nclass Server {}';
+    const result = LicenseDetector.detectEmbeddedNotice(text);
+    assert.ok(result);
+    assert.strictEqual(result.spdxId, 'AGPL-3.0');
+  });
 });

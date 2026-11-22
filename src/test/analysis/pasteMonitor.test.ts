@@ -92,5 +92,37 @@ describe('PasteMonitor (HU-05 T1)', () => {
 
     assert.strictEqual(detectedPastes.length, 0);
   });
+
+  it('detects paste even when VS Code modifies indentation', async () => {
+    const clipboardText = 'function doWork() {\n  return 42;\n}';
+    const indentedText = '    function doWork() {\n      return 42;\n    }';
+    const detectedPastes: { text: string }[] = [];
+
+    const monitor = new PasteMonitor(
+      { readText: async () => clipboardText },
+      (paste) => {
+        detectedPastes.push(paste);
+      }
+    );
+
+    await monitor.handleTextDocumentChange({
+      document: {
+        languageId: 'typescript',
+        uri: { toString: () => 'file:///test.ts' }
+      } as any,
+      contentChanges: [
+        {
+          text: indentedText,
+          range: {} as any,
+          rangeOffset: 0,
+          rangeLength: 0
+        }
+      ],
+      reason: undefined
+    });
+
+    assert.strictEqual(detectedPastes.length, 1);
+    assert.strictEqual(detectedPastes[0].text, indentedText);
+  });
 });
 
