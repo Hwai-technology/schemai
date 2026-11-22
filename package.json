@@ -47,6 +47,36 @@
           "default": "",
           "markdownDeprecationMessage": "Deprecated. Sign in with GitHub or store secrets via SchemAI SecretStorage.",
           "description": "Optional legacy GitHub Personal Access Token."
+        },
+        "schemaAI.llmProvider": {
+          "type": "string",
+          "enum": [
+            "local",
+            "openai",
+            "custom"
+          ],
+          "default": "local",
+          "description": "AI provider for generating license risk explanations: Local LLM (Ollama, LM Studio) or Cloud API (OpenAI, Custom)."
+        },
+        "schemaAI.llmEndpoint": {
+          "type": "string",
+          "default": "http://localhost:11434/v1/chat/completions",
+          "description": "API endpoint for LLM explanations (e.g., http://localhost:11434/v1/chat/completions for local Ollama, or https://api.openai.com/v1/chat/completions for OpenAI)."
+        },
+        "schemaAI.llmModel": {
+          "type": "string",
+          "default": "llama3",
+          "description": "Model name for AI license explanations (e.g., llama3, mistral, gpt-4o-mini)."
+        },
+        "schemaAI.llmLocale": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "en",
+            "es"
+          ],
+          "default": "auto",
+          "description": "Language used for generating AI license explanations."
         }
       }
     },
@@ -94,6 +124,16 @@
       {
         "command": "schemaAI.markFalsePositive",
         "title": "Mark Alert as False Positive",
+        "category": "SchemAI"
+      },
+      {
+        "command": "schemaAI.explainRiskWithAI",
+        "title": "Generate AI License Explanation",
+        "category": "SchemAI"
+      },
+      {
+        "command": "schemaAI.switchLLMProvider",
+        "title": "Switch AI Provider (Local / Cloud API)",
         "category": "SchemAI"
       }
     ],
@@ -149,6 +189,12 @@
         },
         {
           "command": "schemaAI.clearHistory"
+        },
+        {
+          "command": "schemaAI.explainRiskWithAI"
+        },
+        {
+          "command": "schemaAI.switchLLMProvider"
         }
       ],
       "view/item/context": [

@@ -14,6 +14,7 @@ import { SettingsManager } from './config/settings';
 import { detectWorkspaceLicense } from './config/workspaceLicense';
 import { HistoryManager } from './history/historyManager';
 import { HistoryStorage, HISTORY_STORAGE_KEY } from './history/historyStorage';
+import { LLMService } from './llm/llmService';
 import { SchemAIQuickFixProvider, IGNORE_ALERT_COMMAND } from './quickfix/codeActionProvider';
 import { SecretStorageService } from './security/secretStorage';
 import { TokenStore } from './security/tokens';
@@ -76,12 +77,17 @@ export function activate(context: vscode.ExtensionContext, customVscode?: typeof
     );
   }
 
-  // 3. History Management & Sidebar Views
+  // 3. History Management, LLM Service & Sidebar Views
   const historyStorage = new HistoryStorage(context.workspaceState);
   const historyManager = new HistoryManager(historyStorage, diagnosticsManager);
+  const llmService = new LLMService(secretStorage);
 
   if (vs.window?.registerWebviewViewProvider) {
-    const sidebarProvider = new SchemAISidebarViewProvider(historyManager, context.extensionUri);
+    const sidebarProvider = new SchemAISidebarViewProvider(
+      historyManager,
+      llmService,
+      context.extensionUri
+    );
     context.subscriptions.push(
       vs.window.registerWebviewViewProvider(SchemAISidebarViewProvider.viewType, sidebarProvider)
     );
@@ -112,6 +118,78 @@ export function activate(context: vscode.ExtensionContext, customVscode?: typeof
         if (item?.entry?.id) {
           await historyManager.markFalsePositive(item.entry.id);
           void vs.window.showInformationMessage('SchemAI: Alert marked as false positive.');
+        }
+      }),
+      vs.commands.registerCommand('schemaAI.explainRiskWithAI', async () => {
+        const records = historyManager.getRecords();
+        if (records.length === 0) {
+          void vs.window.showInformationMessage('SchemAI: No audit detections recorded yet to explain.');
+          return;
+        }
+        const latest = records[records.length - 1];
+        const snippetPreview = `// File: ${latest.filePath}\n// Reason: ${latest.reason}`;
+        void vs.window.withProgress(
+          {
+            location: vs.ProgressLocation?.Notification ?? 15,
+            title: `SchemAI: Analyzing ${latest.license || 'License'} Risk with AI...`
+          },
+          async () => {
+            const explanation = await llmService.explainRisk(
+              snippetPreview,
+              latest.license || 'GPL-3.0'
+            );
+            void vs.window.showInformationMessage(
+              `SchemAI AI Explanation [${explanation.provider}]:\n\n${explanation.text}`
+            );
+          }
+        );
+      }),
+      vs.commands.registerCommand('schemaAI.switchLLMProvider', async () => {
+        if (!vs.window?.showQuickPick) {
+          return;
+        }
+        const choice = await vs.window.showQuickPick(
+          [
+            {
+              label: '$(server) Local LLM (Ollama)',
+              description: 'http://localhost:11434 - No API key needed, offline friendly',
+              provider: 'local',
+              endpoint: 'http://localhost:11434/v1/chat/completions',
+              model: 'llama3'
+            },
+            {
+              label: '$(server-process) Local LLM (LM Studio)',
+              description: 'http://localhost:1234 - Local desktop model',
+              provider: 'local',
+              endpoint: 'http://localhost:1234/v1/chat/completions',
+              model: 'local-model'
+            },
+            {
+              label: '$(cloud) OpenAI Cloud API',
+              description: 'api.openai.com - Cloud model (requires API key in SecretStorage)',
+              provider: 'openai',
+              endpoint: 'https://api.openai.com/v1/chat/completions',
+              model: 'gpt-4o-mini'
+            },
+            {
+              label: '$(gear) Custom Endpoint',
+              description: 'Specify your own custom LLM server URL',
+              provider: 'custom',
+              endpoint: 'http://localhost:8000/v1/chat/completions',
+              model: 'custom'
+            }
+          ],
+          { placeHolder: 'Select AI / LLM Provider for License Explanations' }
+        );
+
+        if (choice && vs.workspace?.getConfiguration) {
+          const cfg = vs.workspace.getConfiguration('schemaAI');
+          await cfg.update('llmProvider', choice.provider, true);
+          await cfg.update('llmEndpoint', choice.endpoint, true);
+          await cfg.update('llmModel', choice.model, true);
+          void vs.window.showInformationMessage(
+            `SchemAI: AI provider updated to ${choice.label} (${choice.model}).`
+          );
         }
       })
     );

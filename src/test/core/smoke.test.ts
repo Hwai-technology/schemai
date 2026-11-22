@@ -64,6 +64,7 @@ describe('Smoke Test & Module Integration (COORD)', () => {
         activeTextEditor: undefined,
         showInformationMessage: async () => undefined,
         showWarningMessage: async () => undefined,
+        showQuickPick: async () => undefined,
         createStatusBarItem: () => mockStatusBarItem,
         createTextEditorDecorationType: () => ({ key: 'test', dispose: () => {} }),
         createWebviewPanel: () => ({
